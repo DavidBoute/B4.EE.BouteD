@@ -21,6 +21,7 @@ namespace B4.EE.BouteD.Droid
             base.OnCreate(bundle);
 
             global::Xamarin.Forms.Forms.Init(this, bundle);
+            ZXing.Mobile.MobileBarcodeScanner.Initialize(Application);
 
             LoadApplication(new App());
         }
@@ -29,5 +30,6 @@ namespace B4.EE.BouteD.Droid
         {
             base.OnActivityResult(requestCode, resultCode, data);
         }
+
     }
 }

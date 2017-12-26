@@ -1,4 +1,5 @@
-﻿using System;
+﻿using B4.EE.BouteD.ViewModels;
+using FreshMvvm;
 
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
@@ -12,10 +13,9 @@ namespace B4.EE.BouteD
         {
             InitializeComponent();
 
-            if (Device.RuntimePlatform == Device.iOS)
-                MainPage = new MainPage();
-            else
-                MainPage = new NavigationPage(new MainPage());
+            var page = FreshPageModelResolver.ResolvePageModel<SmsViewModel>();
+            var basicNavContainer = new FreshNavigationContainer(page);
+            MainPage = basicNavContainer;
         }
     }
 }

@@ -1,10 +1,15 @@
 ﻿{
   "dependencies": {
-    "Microsoft.NETCore.UniversalWindowsPlatform": "5.2.2",
-    "Xamarin.Forms": "2.4.0.280"
+    "FreshMvvm": "2.2.3",
+    "Microsoft.NETCore.UniversalWindowsPlatform": "6.0.5",
+    "Newtonsoft.Json": "10.0.3",
+    "Xam.Plugins.Messaging": "5.0.0",
+    "Xam.Plugins.Settings": "3.1.1",
+    "Xamarin.Forms": "2.5.0.121934",
+    "ZXing.Net.Mobile": "2.3.2"
   },
   "frameworks": {
-    "uap10.0": {}
+    "uap10.0.10586": {}
   },
   "runtimes": {
     "win10-arm": {},

@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="B4.EE.BouteD.Pages.SmsPage"
+             x:Name="Page">
+    <ContentPage.Content>
+        <StackLayout>
+            <ListView ItemsSource="{Binding SmsList}"
+                      HasUnevenRows="True">
+                <ListView.Header>
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="SMS"
+                               VerticalOptions="CenterAndExpand" 
+                               HorizontalOptions="CenterAndExpand" />
+                        <Label Text="Auto Update?"
+                               HorizontalOptions="End"/>
+                        <Switch IsToggled="{Binding AutoUpdate}"
+                                HorizontalOptions="End"/>
+                    </StackLayout>
+                </ListView.Header>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Frame OutlineColor="Black" CornerRadius="10" HasShadow="True"
+                                       Margin="5">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Label Text="{Binding ContactFullName}"
+                                               Grid.Row="0" Grid.Column="0"/>
+                                        <Label Text="{Binding ContactNumber}"
+                                               Grid.Row="1" Grid.Column="0"/>
+                                        <Label Text="{Binding Message}"
+                                               Grid.Row="2" Grid.Column="0"/>
+
+                                        <Button Text="Delete"
+                                                Grid.Row="0" Grid.Column="1"
+                                                Command="{Binding BindingContext.DeleteSmsCommand, Source={x:Reference Page}}"
+                                                CommandParameter="{Binding Id}"/>
+                                    </Grid>
+                                </Frame>
+                            </Grid>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <Button Text="Send"
+                    Command="{Binding SendSmsListCommand}"/>
+            <Button Text="Get List"
+                    Command="{Binding GetSmsListCommand}"/>
+            <Button Text="Get Settings"
+                    Command="{Binding OpenSettingsCommand}"/>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="B4.EE.BouteD.Pages.SettingsPage"
+             x:Name="Page">
+    <ContentPage.Content>
+        <StackLayout Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Text="Scan QR Code"
+                    Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                    Command="{Binding BindingContext.GetSettingsCommand, Source={x:Reference Page}}"/>
+
+                <Label Text="Prefix"
+                       Grid.Row="1" Grid.Column="0"
+                       VerticalOptions="Start" HorizontalOptions="Fill"
+                       Margin="0,0,20,0"/>
+                <Entry Text="{Binding Prefix}"                           
+                   Grid.Row="1" Grid.Column="1"
+                   VerticalOptions="Start"/>
+
+                <Label Text="Host"
+                   Grid.Row="2" Grid.Column="0"
+                   VerticalOptions="Start" HorizontalOptions="Fill"/>
+                <Entry Text="{Binding Host}"                           
+                   Grid.Row="2" Grid.Column="1"
+                   VerticalOptions="Start"/>
+
+                <Label Text="Port"
+                   Grid.Row="3" Grid.Column="0"
+                   VerticalOptions="Start" HorizontalOptions="Fill"/>
+                <Entry Text="{Binding Port}"                           
+                   Grid.Row="3" Grid.Column="1"
+                   VerticalOptions="Start"/>
+
+                <Label Text="Path"
+                   Grid.Row="4" Grid.Column="0"
+                       VerticalOptions="Start" HorizontalOptions="Fill"/>
+                <Entry Text="{Binding Path}"                           
+                   Grid.Row="4" Grid.Column="1"
+                   VerticalOptions="Start"/>
+            </Grid>
+
+            <Button Text="Save Settings"
+                    VerticalOptions="EndAndExpand"
+                    Command="{Binding BindingContext.SaveSettingsCommand, Source={x:Reference Page}}"/>
+        </StackLayout>
+
+
+    </ContentPage.Content>
+</ContentPage>
