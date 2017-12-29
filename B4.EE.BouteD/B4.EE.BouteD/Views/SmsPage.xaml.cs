@@ -11,5 +11,10 @@ namespace B4.EE.BouteD.Pages
         {
             InitializeComponent();
         }
+
+        private void Button_Clicked(object sender, System.EventArgs e)
+        {
+
+        }
     }
 }

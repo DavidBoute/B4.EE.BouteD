@@ -36,7 +36,7 @@ namespace B4.EE.BouteD.ViewModels
             set { _path = value; RaisePropertyChanged(); }
         }
 
-        public ICommand GetSettingsCommand => new Command(
+        public ICommand GetQRCommand => new Command(
             async () =>
             {
                 try
@@ -63,6 +63,8 @@ namespace B4.EE.BouteD.ViewModels
                 ConnectionSettings.Host = Host;
                 ConnectionSettings.Port = Port;
                 ConnectionSettings.Path = Path;
+
+                CoreMethods.PopPageModel();
             });
 
         // Constructor

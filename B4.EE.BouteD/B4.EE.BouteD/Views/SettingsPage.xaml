@@ -3,6 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="B4.EE.BouteD.Pages.SettingsPage"
              x:Name="Page">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Order="Primary" Icon="Images/qr.png" Text="Scan QR" Priority="0" 
+                         Command="{Binding GetQRCommand}"/>
+    </ContentPage.ToolbarItems>
     <ContentPage.Content>
         <StackLayout Padding="20">
             <Grid>
@@ -17,11 +21,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
-                <Button Text="Scan QR Code"
-                    Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
-                    Command="{Binding BindingContext.GetSettingsCommand, Source={x:Reference Page}}"/>
-
+                
                 <Label Text="Prefix"
                        Grid.Row="1" Grid.Column="0"
                        VerticalOptions="Start" HorizontalOptions="Fill"
@@ -54,7 +54,7 @@
 
             <Button Text="Save Settings"
                     VerticalOptions="EndAndExpand"
-                    Command="{Binding BindingContext.SaveSettingsCommand, Source={x:Reference Page}}"/>
+                    Command="{Binding SaveSettingsCommand}"/>
         </StackLayout>
 
 

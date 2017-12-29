@@ -1,12 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:conv="clr-namespace:B4.EE.BouteD.Converters"
              x:Class="B4.EE.BouteD.Pages.SmsPage"
              x:Name="Page">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:StatusToColorConverter x:Key="StatusToColorConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Order="Primary" Icon="Images/refresh.png" Text="Refresh" Priority="0" 
+                         Command="{Binding GetSmsListCommand}"/>
+        <ToolbarItem Order="Primary" Icon="Images/settings.png" Text="Settings" Priority="1" 
+                         Command="{Binding OpenSettingsCommand}"/>
+    </ContentPage.ToolbarItems>
     <ContentPage.Content>
         <StackLayout>
             <ListView ItemsSource="{Binding SmsList}"
-                      HasUnevenRows="True">
+                      HasUnevenRows="True"
+                      IsPullToRefreshEnabled="True">
                 <ListView.Header>
                     <StackLayout Orientation="Horizontal">
                         <Label Text="SMS"
@@ -21,6 +34,17 @@
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
+                            <ViewCell.ContextActions>
+                                <MenuItem Text="Change status"
+                                          Command="{Binding BindingContext.ChangeSmsStatusCommand, Source={x:Reference Page}}"
+                                          CommandParameter="{Binding .}"/>
+                                <MenuItem Text="Send"
+                                          Command="{Binding BindingContext.SendSmsCommand, Source={x:Reference Page}}"
+                                          CommandParameter="{Binding .}"/>
+                                <MenuItem Text="Delete" IsDestructive="True"
+                                          Command="{Binding BindingContext.DeleteSmsCommand, Source={x:Reference Page}}"
+                                          CommandParameter="{Binding Id}"/>
+                            </ViewCell.ContextActions>
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition/>
@@ -29,16 +53,16 @@
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
                                 <Frame OutlineColor="Black" CornerRadius="10" HasShadow="True"
-                                       Margin="5">
+                                       Margin="5" Padding="5"
+                                       BackgroundColor="{Binding StatusName, Converter={StaticResource StatusToColorConverter}}">
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition/>
-                                            <RowDefinition/>
-                                            <RowDefinition/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition/>
                                         </Grid.ColumnDefinitions>
 
                                         <Label Text="{Binding ContactFullName}"
@@ -47,11 +71,6 @@
                                                Grid.Row="1" Grid.Column="0"/>
                                         <Label Text="{Binding Message}"
                                                Grid.Row="2" Grid.Column="0"/>
-
-                                        <Button Text="Delete"
-                                                Grid.Row="0" Grid.Column="1"
-                                                Command="{Binding BindingContext.DeleteSmsCommand, Source={x:Reference Page}}"
-                                                CommandParameter="{Binding Id}"/>
                                     </Grid>
                                 </Frame>
                             </Grid>
@@ -61,10 +80,6 @@
             </ListView>
             <Button Text="Send"
                     Command="{Binding SendSmsListCommand}"/>
-            <Button Text="Get List"
-                    Command="{Binding GetSmsListCommand}"/>
-            <Button Text="Get Settings"
-                    Command="{Binding OpenSettingsCommand}"/>
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>

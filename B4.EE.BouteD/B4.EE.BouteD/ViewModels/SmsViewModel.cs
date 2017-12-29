@@ -15,6 +15,8 @@ namespace B4.EE.BouteD.ViewModels
 {
     public class SmsViewModel : FreshBasePageModel
     {
+        private SmsFromRestService _smsService;
+
         private bool _autoUpdate;
         public bool AutoUpdate
         {
@@ -71,8 +73,7 @@ namespace B4.EE.BouteD.ViewModels
                             sms.StatusName = newStatus.Name;
                         }
 
-                        SmsFromRestService smsService = new SmsFromRestService();
-                        smsService.UpdateSms(sms);
+                        _smsService.UpdateSms(sms);
                     }
                     else
                         CoreMethods.DisplayAlert("Send SMS failure", "Kan SMS niet verzenden", "Cancel");
@@ -82,10 +83,9 @@ namespace B4.EE.BouteD.ViewModels
         public ICommand GetSmsListCommand => new Command(
             async () =>
             {
-                SmsFromRestService smsService = new SmsFromRestService();
                 if (SmsList.Count != 0)
                 {
-                    var newList = await smsService.GetSmsList();
+                    var newList = await _smsService.GetSmsList();
 
                     // Elementen toevoegen/aanpassen
                     foreach (SmsDTO sms in newList)
@@ -118,15 +118,14 @@ namespace B4.EE.BouteD.ViewModels
                 }
                 else
                 {
-                    SmsList = await smsService.GetSmsList();
+                    SmsList = await _smsService.GetSmsList();
                 }
             });
 
         public ICommand DeleteSmsCommand => new Command(
             async (guid) =>
             {
-                SmsFromRestService smsService = new SmsFromRestService();
-                string res = await smsService.DeleteSms(guid as string);
+                string res = await _smsService.DeleteSms(guid as string);
             });
 
         private void ToggleAutoUpdate()
@@ -145,8 +144,7 @@ namespace B4.EE.BouteD.ViewModels
         public ICommand GetStatusListCommand => new Command(
            async () =>
            {
-               SmsFromRestService smsService = new SmsFromRestService();
-               StatusList = await smsService.GetStatusList();
+               StatusList = await _smsService.GetStatusList();
            });
 
         public ICommand OpenSettingsCommand => new Command(
@@ -155,13 +153,51 @@ namespace B4.EE.BouteD.ViewModels
                 await CoreMethods.PushPageModel<SettingsViewModel>(true);
             });
 
+
+        public ICommand ChangeSmsStatusCommand => new Command(
+            async (smsDto) =>
+            {
+                var sms = smsDto as SmsDTO;
+                if (sms != null)
+                {
+                    string result = await CoreMethods.DisplayActionSheet("Select new status", "Ok", "Cancel",
+                        StatusList.Select(x => x.Name).ToArray());
+
+                    if (result != sms.StatusName)
+                    {
+                        StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == result);
+                        if (newStatus != null)
+                        {
+                            sms.StatusId = newStatus.Id;
+                            sms.StatusName = newStatus.Name;
+                        }
+
+                        _smsService.UpdateSms(sms);
+                    }
+                }
+            });
+
+        // ReverseInit
+        public override void ReverseInit(object value)
+        {
+
+        }
+
+        // Init
+        public override void Init(object initData)
+        {
+            GetSmsListCommand.Execute(null);
+            GetStatusListCommand.Execute(null);
+        }
+
         // Constructor
         public SmsViewModel()
         {
             SmsList = new ObservableCollection<SmsDTO>();
             AutoUpdate = false;
-            GetSmsListCommand.Execute(null);
-            GetStatusListCommand.Execute(null);
+
+            _smsService = new SmsFromRestService();
+
         }
 
     }

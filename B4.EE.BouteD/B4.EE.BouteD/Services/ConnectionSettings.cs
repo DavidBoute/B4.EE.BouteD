@@ -42,7 +42,7 @@ namespace B4.EE.BouteD.Services
             // Set initial settings
             if (!AppSettings.Contains(nameof(Prefix))) Prefix = "http://";
             if (!AppSettings.Contains(nameof(Host))) Host = "192.168.1.4";
-            if (!AppSettings.Contains(nameof(Port))) Port = "45456";
+            if (!AppSettings.Contains(nameof(Port))) Port = "45455";
             if (!AppSettings.Contains(nameof(Path))) Path = "api/";
         }
     }

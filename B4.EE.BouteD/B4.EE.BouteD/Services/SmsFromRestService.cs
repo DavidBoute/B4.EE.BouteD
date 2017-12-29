@@ -18,24 +18,33 @@ namespace B4.EE.BouteD.Services
             request.Method = "GET";
 
             string content;
-            using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
+
+            try
             {
-                if (response.StatusCode != HttpStatusCode.OK)
-                    Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);
-                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
                 {
-                    content = reader.ReadToEnd();
-                    if (!string.IsNullOrWhiteSpace(content))
+                    if (response.StatusCode != HttpStatusCode.OK)
+                        Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);
+                    using (StreamReader reader = new StreamReader(response.GetResponseStream()))
                     {
-                        return content;
-                    }
-                    else
-                    {
-                        Debug.WriteLine("Response contained empty body");
-                        return string.Empty;
+                        content = reader.ReadToEnd();
+                        if (!string.IsNullOrWhiteSpace(content))
+                        {
+                            return content;
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Response contained empty body");
+                            return string.Empty;
+                        }
                     }
                 }
             }
+            catch (System.Exception)
+            {
+                return null;
+            }
+
         }
 
         public async Task<ObservableCollection<SmsDTO>> GetSmsList()
@@ -44,22 +53,25 @@ namespace B4.EE.BouteD.Services
 
             string content = await GetJSON("sms");
 
-            var smsJArray = JArray.Parse(content);
-            foreach (JObject smsJObject in smsJArray)
+            if (content != null)
             {
-                SmsDTO smsDTO = new SmsDTO
+                var smsJArray = JArray.Parse(content);
+                foreach (JObject smsJObject in smsJArray)
                 {
-                    Id = smsJObject["Id"].Value<string>(),
-                    Message = smsJObject["Message"].Value<string>(),
-                    TimeStamp = smsJObject["TimeStamp"].Value<string>(),
-                    StatusId = smsJObject["StatusId"].Value<int>(),
-                    StatusName = smsJObject["StatusName"].Value<string>(),
-                    ContactId = smsJObject["ContactId"].Value<string>(),
-                    ContactFirstName = smsJObject["ContactFirstName"].Value<string>(),
-                    ContactLastName = smsJObject["ContactLastName"].Value<string>(),
-                    ContactNumber = smsJObject["ContactNumber"].Value<string>()
-                };
-                smsList.Add(smsDTO);
+                    SmsDTO smsDTO = new SmsDTO
+                    {
+                        Id = smsJObject["Id"].Value<string>(),
+                        Message = smsJObject["Message"].Value<string>(),
+                        TimeStamp = smsJObject["TimeStamp"].Value<string>(),
+                        StatusId = smsJObject["StatusId"].Value<int>(),
+                        StatusName = smsJObject["StatusName"].Value<string>(),
+                        ContactId = smsJObject["ContactId"].Value<string>(),
+                        ContactFirstName = smsJObject["ContactFirstName"].Value<string>(),
+                        ContactLastName = smsJObject["ContactLastName"].Value<string>(),
+                        ContactNumber = smsJObject["ContactNumber"].Value<string>()
+                    };
+                    smsList.Add(smsDTO);
+                }
             }
 
             return smsList;
@@ -79,12 +91,20 @@ namespace B4.EE.BouteD.Services
                 streamWriter.Flush();
             }
 
-            using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
+            try
             {
-                if (response.StatusCode != HttpStatusCode.OK)
-                    Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);
-                return response.StatusCode.ToString();
+                using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
+                {
+                    if (response.StatusCode != HttpStatusCode.OK)
+                        Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);
+                    return response.StatusCode.ToString();
+                }
             }
+            catch (System.Exception)
+            {
+                return null;
+            }
+
         }
 
         public async Task<string> DeleteSms(string guid)
@@ -93,12 +113,20 @@ namespace B4.EE.BouteD.Services
             request.ContentType = "application/json";
             request.Method = "DELETE";
 
-            using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
+            try
             {
-                if (response.StatusCode != HttpStatusCode.OK)
-                    Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);
-                return response.StatusCode.ToString();
+                using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
+                {
+                    if (response.StatusCode != HttpStatusCode.OK)
+                        Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);
+                    return response.StatusCode.ToString();
+                }
             }
+            catch (System.Exception ex)
+            {
+                return null;
+            }
+
         }
 
         public async Task<ObservableCollection<StatusDTO>> GetStatusList()
@@ -107,15 +135,18 @@ namespace B4.EE.BouteD.Services
 
             string content = await GetJSON("status");
 
-            var statusJArray = JArray.Parse(content);
-            foreach (JObject statusJObject in statusJArray)
+            if (content != null)
             {
-                StatusDTO statusDTO = new StatusDTO
+                var statusJArray = JArray.Parse(content);
+                foreach (JObject statusJObject in statusJArray)
                 {
-                    Id = statusJObject["Id"].Value<int>(),
-                    Name = statusJObject["Name"].Value<string>(),
-                };
-                statusList.Add(statusDTO);
+                    StatusDTO statusDTO = new StatusDTO
+                    {
+                        Id = statusJObject["Id"].Value<int>(),
+                        Name = statusJObject["Name"].Value<string>(),
+                    };
+                    statusList.Add(statusDTO);
+                }
             }
 
             return statusList;
