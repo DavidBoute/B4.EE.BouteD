@@ -1,6 +1,7 @@
 ﻿{
   "dependencies": {
     "FreshMvvm": "2.2.3",
+    "Microsoft.AspNet.SignalR.Client": "2.2.2",
     "Microsoft.NETCore.UniversalWindowsPlatform": "6.0.5",
     "Newtonsoft.Json": "10.0.3",
     "Xam.Plugins.Messaging": "5.0.0",

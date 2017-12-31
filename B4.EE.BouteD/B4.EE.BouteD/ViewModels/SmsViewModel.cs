@@ -16,6 +16,7 @@ namespace B4.EE.BouteD.ViewModels
     public class SmsViewModel : FreshBasePageModel
     {
         private SmsFromRestService _smsService;
+        private SignalRService _signalRService;
 
         private bool _autoUpdate;
         public bool AutoUpdate
@@ -197,6 +198,23 @@ namespace B4.EE.BouteD.ViewModels
             AutoUpdate = false;
 
             _smsService = new SmsFromRestService();
+            _signalRService = new SignalRService(this);
+
+            // Server Sent Events
+            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "POST", (smsDTOWithClient) =>
+                 {
+                     CoreMethods.DisplayAlert("New message from server", smsDTOWithClient.Operation,"OK");
+                 });
+
+            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "PUT", (smsDTOWithClient) =>
+            {
+                CoreMethods.DisplayAlert("New message from server", smsDTOWithClient.Operation, "OK");
+            });
+
+            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "DELETE", (smsDTOWithClient) =>
+            {
+                CoreMethods.DisplayAlert("New message from server", smsDTOWithClient.Operation, "OK");
+            });
 
         }
 
