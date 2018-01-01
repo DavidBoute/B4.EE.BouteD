@@ -79,7 +79,7 @@ namespace B4.EE.BouteD.Services
 
         public async Task<string> UpdateSms(SmsDTO sms)
         {
-            var request = (HttpWebRequest)WebRequest.Create($"{ConnectionSettings.Prefix}{ConnectionSettings.Host}:{ConnectionSettings.Port}/{ConnectionSettings.Path}sms/{sms.Id}");
+            var request = (HttpWebRequest)WebRequest.Create($"{ConnectionSettings.Prefix}{ConnectionSettings.Host}:{ConnectionSettings.Port}/{ConnectionSettings.Path}sms/{sms.Id.ToString()}");
             request.ContentType = "application/json";
             request.Method = "PUT";
 
@@ -96,11 +96,11 @@ namespace B4.EE.BouteD.Services
                 using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
                 {
                     if (response.StatusCode != HttpStatusCode.OK)
-                        Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);
+                        Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);                        
                     return response.StatusCode.ToString();
                 }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 return null;
             }

@@ -156,6 +156,18 @@ namespace B4.EE.BouteD.Models
                 );
         }
 
+        public void CopyFrom(SmsDTO b)
+        {
+            this.ContactId = b.ContactId;
+            this.ContactFirstName = b.ContactFirstName;
+            this.ContactLastName = b.ContactLastName;
+            this.ContactNumber = b.ContactNumber;
+            this.Message = b.Message;
+            this.StatusId = b.StatusId;
+            this.StatusName = b.StatusName;
+            this.TimeStamp = b.TimeStamp;
+        }
+
         #region INotifyPropertyChanged Implementation
         public event PropertyChangedEventHandler PropertyChanged;
         internal void OnPropertyChanged([CallerMemberName] string propertyName = "")

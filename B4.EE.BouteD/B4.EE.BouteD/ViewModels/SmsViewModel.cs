@@ -10,6 +10,7 @@ using System.Linq;
 using System.Windows.Input;
 using Xamarin.Forms;
 using B4.EE.BouteD.Pages;
+using System.Threading.Tasks;
 
 namespace B4.EE.BouteD.ViewModels
 {
@@ -56,7 +57,7 @@ namespace B4.EE.BouteD.ViewModels
             });
 
         public ICommand SendSmsCommand => new Command(
-            (smsDto) =>
+            async (smsDto) =>
             {
                 var sms = smsDto as SmsDTO;
                 if (sms != null)
@@ -65,7 +66,7 @@ namespace B4.EE.BouteD.ViewModels
                     if (smsMessenger.CanSendSmsInBackground)
                     {
                         //smsMessenger.SendSmsInBackground("+32494240152", "Well hello there from Xam.Messaging.Plugin");
-                        CoreMethods.DisplayAlert("Send SMS success", sms.ContactFullName + " - " + sms.Message, "Cancel");
+                        await CoreMethods.DisplayAlert("Send SMS success", sms.ContactFullName + " - " + sms.Message, "Cancel");
 
                         StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == "Sent");
                         if (newStatus != null)
@@ -74,10 +75,20 @@ namespace B4.EE.BouteD.ViewModels
                             sms.StatusName = newStatus.Name;
                         }
 
-                        _smsService.UpdateSms(sms);
+                        string res = await _smsService.UpdateSms(sms);
+                        if (res == "OK")
+                        {
+
+                            _signalRService.NotifyChange(new SmsDTOWithClient
+                            {
+                                Operation = "PUT",
+                                Client = "Xamarin",
+                                SmsDTO = sms
+                            });
+                        }
                     }
                     else
-                        CoreMethods.DisplayAlert("Send SMS failure", "Kan SMS niet verzenden", "Cancel");
+                        await CoreMethods.DisplayAlert("Send SMS failure", "Kan SMS niet verzenden", "Cancel");
                 }
             });
 
@@ -127,6 +138,16 @@ namespace B4.EE.BouteD.ViewModels
             async (guid) =>
             {
                 string res = await _smsService.DeleteSms(guid as string);
+                if (res == "OK")
+                {
+
+                    _signalRService.NotifyChange(new SmsDTOWithClient
+                    {
+                        Operation = "DELETE",
+                        Client = "Xamarin",
+                        SmsDTO = SmsList.SingleOrDefault(x => x.Id == guid as string)
+                    });
+                }
             });
 
         private void ToggleAutoUpdate()
@@ -173,10 +194,20 @@ namespace B4.EE.BouteD.ViewModels
                             sms.StatusName = newStatus.Name;
                         }
 
-                        _smsService.UpdateSms(sms);
+                        string res = await _smsService.UpdateSms(sms);
+                        if (res == "OK")
+                        {
+                            _signalRService.NotifyChange(new SmsDTOWithClient
+                            {
+                                Operation = "PUT",
+                                Client = "Xamarin",
+                                SmsDTO = sms
+                            });
+                        }
                     }
                 }
             });
+
 
         // ReverseInit
         public override void ReverseInit(object value)
@@ -201,20 +232,76 @@ namespace B4.EE.BouteD.ViewModels
             _signalRService = new SignalRService(this);
 
             // Server Sent Events
-            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "POST", (smsDTOWithClient) =>
-                 {
-                     CoreMethods.DisplayAlert("New message from server", smsDTOWithClient.Operation,"OK");
-                 });
 
-            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "PUT", (smsDTOWithClient) =>
-            {
-                CoreMethods.DisplayAlert("New message from server", smsDTOWithClient.Operation, "OK");
-            });
+            //MessagingCenter.Subscribe<SmsDTOWithClient>(this, "POST",
+            //    (smsDTOWithClient) =>
+            //     {
+            //         if (smsDTOWithClient.SmsDTO.StatusName != "Created")
+            //         {
+            //             Device.BeginInvokeOnMainThread(() =>
+            //             {
+            //                 SmsList.Add(smsDTOWithClient.SmsDTO);
+            //             });
+            //         }
+            //     });
 
-            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "DELETE", (smsDTOWithClient) =>
-            {
-                CoreMethods.DisplayAlert("New message from server", smsDTOWithClient.Operation, "OK");
-            });
+            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "PUT",
+                (smsDTOWithClient) =>
+                {
+                    Device.BeginInvokeOnMainThread(async () =>
+                    {
+                        var foundSms = SmsList.FirstOrDefault(x => x.Id == smsDTOWithClient.SmsDTO.Id);
+                        if (foundSms != null) // Als sms al bestaat: updaten
+                        {
+                            // Status aanpassen naar Pending om aan te duiden dat de telefoon aan het verwerken is
+                            if (smsDTOWithClient.SmsDTO.StatusName == "Queued")
+                            {
+                                StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == "Pending");
+                                if (newStatus != null)
+                                {
+                                    smsDTOWithClient.SmsDTO.StatusId = newStatus.Id;
+                                    smsDTOWithClient.SmsDTO.StatusName = newStatus.Name;
+                                }
+
+                                string res = await _smsService.UpdateSms(smsDTOWithClient.SmsDTO);
+                                if (res == "OK")
+                                {
+                                    _signalRService.NotifyChange(new SmsDTOWithClient
+                                    {
+                                        Operation = "PUT",
+                                        Client = "Xamarin",
+                                        SmsDTO = smsDTOWithClient.SmsDTO
+                                    });
+                                }
+                            }
+
+                            if (!smsDTOWithClient.SmsDTO.IsEqual(foundSms))
+                            {
+                                foundSms.CopyFrom(smsDTOWithClient.SmsDTO);
+                            }
+                        }
+                        else // Als hij nog niet bestaat: invoegen indien niet status Created
+                        {
+                            if (smsDTOWithClient.SmsDTO.StatusName != "Created")
+                            {
+                                SmsList.Add(smsDTOWithClient.SmsDTO);
+                            }
+                        }
+                    });
+                });
+
+            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "DELETE",
+                (smsDTOWithClient) =>
+                {
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        var foundSms = SmsList.FirstOrDefault(x => x.Id == smsDTOWithClient.SmsDTO.Id);
+                        if (foundSms != null)
+                        {
+                            SmsList.Remove(foundSms);
+                        }
+                    });
+                });
 
         }
 
