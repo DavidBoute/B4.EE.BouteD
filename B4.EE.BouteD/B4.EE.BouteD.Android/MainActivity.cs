@@ -7,6 +7,12 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Android.OS;
+using Android.Support.V4.Content;
+using Android;
+using Android.Support.Design.Widget;
+using Android.Util;
+using Android.Support.V4.App;
+using Plugin.Permissions;
 
 namespace B4.EE.BouteD.Droid
 {
@@ -24,6 +30,7 @@ namespace B4.EE.BouteD.Droid
             ZXing.Mobile.MobileBarcodeScanner.Initialize(Application);
 
             LoadApplication(new App());
+
         }
 
         protected override void OnActivityResult(int requestCode, Result resultCode, Intent data)
@@ -31,5 +38,10 @@ namespace B4.EE.BouteD.Droid
             base.OnActivityResult(requestCode, resultCode, data);
         }
 
+        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
+        {
+            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+            PermissionsImplementation.Current.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 }

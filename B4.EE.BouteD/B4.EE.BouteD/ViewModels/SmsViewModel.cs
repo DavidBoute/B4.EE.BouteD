@@ -1,16 +1,16 @@
-﻿using B4.EE.BouteD.Models;
+﻿using B4.EE.BouteD.Constants;
+using B4.EE.BouteD.Models;
 using B4.EE.BouteD.Services;
 using FreshMvvm;
-using Newtonsoft.Json;
 using Plugin.Messaging;
+using Plugin.Permissions;
+using Plugin.Permissions.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 using Xamarin.Forms;
-using B4.EE.BouteD.Pages;
-using System.Threading.Tasks;
 
 namespace B4.EE.BouteD.ViewModels
 {
@@ -19,16 +19,25 @@ namespace B4.EE.BouteD.ViewModels
         private SmsFromRestService _smsService;
         private SignalRService _signalRService;
 
-        private bool _autoUpdate;
-        public bool AutoUpdate
+        private bool _canSend;
+        public bool CanSend
         {
-            get { return _autoUpdate; }
-            set
-            {
-                _autoUpdate = value;
-                RaisePropertyChanged();
-                ToggleAutoUpdate();
-            }
+            get { return _canSend; }
+            set { _canSend = value; RaisePropertyChanged(); }
+        }
+
+        private bool _isRefreshing;
+        public bool IsRefreshing
+        {
+            get { return _isRefreshing; }
+            set { _isRefreshing = value; RaisePropertyChanged(); }
+        }
+
+        private string _connectionState;
+        public string ConnectionState
+        {
+            get { return _connectionState; }
+            set { _connectionState = value; RaisePropertyChanged(); }
         }
 
         private ICollection<StatusDTO> _statusList;
@@ -42,8 +51,7 @@ namespace B4.EE.BouteD.ViewModels
         public ObservableCollection<SmsDTO> SmsList
         {
             get { return _smsList; }
-            set
-            { _smsList = value; RaisePropertyChanged(); }
+            set { _smsList = value; RaisePropertyChanged(); }
         }
 
         public ICommand SendSmsListCommand => new Command(
@@ -63,32 +71,74 @@ namespace B4.EE.BouteD.ViewModels
                 if (sms != null)
                 {
                     var smsMessenger = CrossMessaging.Current.SmsMessenger;
+                    StatusDTO newStatus;
                     if (smsMessenger.CanSendSmsInBackground)
                     {
-                        //smsMessenger.SendSmsInBackground("+32494240152", "Well hello there from Xam.Messaging.Plugin");
-                        await CoreMethods.DisplayAlert("Send SMS success", sms.ContactFullName + " - " + sms.Message, "Cancel");
-
-                        StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == "Sent");
-                        if (newStatus != null)
+                        try
                         {
-                            sms.StatusId = newStatus.Id;
-                            sms.StatusName = newStatus.Name;
-                        }
-
-                        string res = await _smsService.UpdateSms(sms);
-                        if (res == "OK")
-                        {
-
-                            _signalRService.NotifyChange(new SmsDTOWithClient
+                            if (CanSend)
                             {
-                                Operation = "PUT",
-                                Client = "Xamarin",
-                                SmsDTO = sms
-                            });
+
+                                try
+                                {
+                                    var status = await CrossPermissions.Current.CheckPermissionStatusAsync(Permission.Sms);
+                                    if (status != PermissionStatus.Granted)
+                                    {
+                                        var results = await CrossPermissions.Current.RequestPermissionsAsync(Permission.Sms);
+                                        //Best practice to always check that the key exists
+                                        if (results.ContainsKey(Permission.Sms))
+                                            status = results[Permission.Sms];
+                                    }
+
+                                    if (status == PermissionStatus.Granted)
+                                    {
+                                        smsMessenger.SendSmsInBackground("+32494240152", "Well hello there from Xam.Messaging.Plugin");
+                                    }
+                                    else if (status != PermissionStatus.Unknown)
+                                    {
+                                        await CoreMethods.DisplayAlert("Sms toestemming geweigerd", "Probeer later opnieuw.", "OK");
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                }
+
+                            }
+                            else
+                                await CoreMethods.DisplayAlert("Send SMS success", sms.ContactFullName + " - " + sms.Message, "Cancel");
+
+                            newStatus = StatusList.SingleOrDefault(x => x.Name == "Sent");
+                        }
+                        catch (Exception)
+                        {
+                            await CoreMethods.DisplayAlert("Send SMS failure", "Kan SMS niet verzenden", "Cancel");
+
+                            newStatus = StatusList.SingleOrDefault(x => x.Name == "Error");
                         }
                     }
                     else
-                        await CoreMethods.DisplayAlert("Send SMS failure", "Kan SMS niet verzenden", "Cancel");
+                    {
+                        await CoreMethods.DisplayAlert("Send SMS failure", "SMS niet mogelijk", "Cancel");
+
+                        newStatus = StatusList.SingleOrDefault(x => x.Name == "Error");
+                    }
+                    if (newStatus != null)
+                    {
+                        sms.StatusId = newStatus.Id;
+                        sms.StatusName = newStatus.Name;
+                    }
+
+                    string res = await _smsService.UpdateSms(sms);
+                    if (res == "OK")
+                    {
+                        _signalRService.NotifyChange(new SmsDTOWithClient
+                        {
+                            Operation = "PUT",
+                            Client = "Xamarin",
+                            SmsDTO = sms
+                        });
+                    }
+
                 }
             });
 
@@ -132,7 +182,10 @@ namespace B4.EE.BouteD.ViewModels
                 {
                     SmsList = await _smsService.GetSmsList();
                 }
-            });
+
+                IsRefreshing = false;
+            },
+            () => { return !IsRefreshing; });
 
         public ICommand DeleteSmsCommand => new Command(
             async (guid) =>
@@ -140,28 +193,18 @@ namespace B4.EE.BouteD.ViewModels
                 string res = await _smsService.DeleteSms(guid as string);
                 if (res == "OK")
                 {
+                    SmsDTO smsToDelete = SmsList.SingleOrDefault(x => x.Id == guid as string);
 
                     _signalRService.NotifyChange(new SmsDTOWithClient
                     {
                         Operation = "DELETE",
                         Client = "Xamarin",
-                        SmsDTO = SmsList.SingleOrDefault(x => x.Id == guid as string)
+                        SmsDTO = smsToDelete
                     });
+
+                    SmsList.Remove(smsToDelete);
                 }
             });
-
-        private void ToggleAutoUpdate()
-        {
-            if (AutoUpdate)
-            {
-                Device.StartTimer(new TimeSpan(0, 0, 0, 5), () =>
-                    {
-                        GetSmsListCommand.Execute(null);
-                        return AutoUpdate;
-                    }
-                );
-            }
-        }
 
         public ICommand GetStatusListCommand => new Command(
            async () =>
@@ -208,6 +251,11 @@ namespace B4.EE.BouteD.ViewModels
                 }
             });
 
+        public ICommand ShowConnectionStateCommand => new Command(
+            async () =>
+            {
+                await CoreMethods.DisplayAlert("Connectionstate...", ConnectionState, "OK");
+            });
 
         // ReverseInit
         public override void ReverseInit(object value)
@@ -226,25 +274,13 @@ namespace B4.EE.BouteD.ViewModels
         public SmsViewModel()
         {
             SmsList = new ObservableCollection<SmsDTO>();
-            AutoUpdate = false;
+            ConnectionState = SignalRConnectionState.Closed;
 
             _smsService = new SmsFromRestService();
             _signalRService = new SignalRService(this);
 
             // Server Sent Events
-
-            //MessagingCenter.Subscribe<SmsDTOWithClient>(this, "POST",
-            //    (smsDTOWithClient) =>
-            //     {
-            //         if (smsDTOWithClient.SmsDTO.StatusName != "Created")
-            //         {
-            //             Device.BeginInvokeOnMainThread(() =>
-            //             {
-            //                 SmsList.Add(smsDTOWithClient.SmsDTO);
-            //             });
-            //         }
-            //     });
-
+            #region Server Sent Events
             MessagingCenter.Subscribe<SmsDTOWithClient>(this, "PUT",
                 (smsDTOWithClient) =>
                 {
@@ -302,7 +338,40 @@ namespace B4.EE.BouteD.ViewModels
                         }
                     });
                 });
+            #endregion
 
+            // ConnectionState updates
+            #region ConnectionState updates
+            MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Open,
+                (signalRService) =>
+                {
+                    ConnectionState = SignalRConnectionState.Open;
+                });
+
+            MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Slow,
+                (signalRService) =>
+                {
+                    ConnectionState = SignalRConnectionState.Slow;
+                });
+
+            MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Reconnecting,
+                (signalRService) =>
+                {
+                    ConnectionState = SignalRConnectionState.Reconnecting;
+                });
+            MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Closed,
+                (signalRService) =>
+                {
+                    ConnectionState = SignalRConnectionState.Closed;
+                });
+            MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Error,
+                (signalRService) =>
+                {
+                    ConnectionState = SignalRConnectionState.Error;
+                });
+
+
+            #endregion
         }
 
     }

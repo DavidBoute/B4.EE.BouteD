@@ -18,12 +18,14 @@ namespace B4.EE.BouteD.Droid.Services
             {
                 TopText = "Scan the QR Code",
                 BottomText = "Please Wait",
+                FlashButtonText = "Illuminate",
+                CancelButtonText = "Back"
             };
 
             try
             {
                 var scanResult = await scanner.Scan();
-                return scanResult.Text;
+                return (scanResult == null) ? string.Empty : scanResult.Text;
             }
             catch (System.Exception ex)
             {

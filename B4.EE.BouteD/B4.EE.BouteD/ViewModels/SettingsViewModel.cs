@@ -44,16 +44,23 @@ namespace B4.EE.BouteD.ViewModels
                     var scanner = DependencyService.Get<IQRScanningService>();
                     var result = await scanner.ScanAsync();
 
-                    ConnectionSettingsDTO settings = JsonConvert.DeserializeObject<ConnectionSettingsDTO>(result);
-                    Prefix = settings.Prefix;
-                    Host = settings.Host;
-                    Port = settings.Port;
-                    Path = settings.Path;
+                    if (result != String.Empty)
+                    {
+                        ConnectionSettingsDTO settings = JsonConvert.DeserializeObject<ConnectionSettingsDTO>(result);
+                        Prefix = settings.Prefix;
+                        Host = settings.Host;
+                        Port = settings.Port;
+                        Path = settings.Path;
+                    }
                 }
                 catch (Exception ex)
                 {
                     await CoreMethods.DisplayAlert("Fout", ex.Message, "Cancel");
                 }
+
+
+                // TODO page sluit automatisch -> tegenhouden
+
             });
 
         public ICommand SaveSettingsCommand => new Command(

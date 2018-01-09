@@ -7,6 +7,7 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <conv:StatusToColorConverter x:Key="StatusToColorConverter" />
+            <conv:ConnectionStateToImageSourceConverter x:Key="ConnectionStateToImageSourceConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
     <ContentPage.ToolbarItems>
@@ -19,16 +20,31 @@
         <StackLayout>
             <ListView ItemsSource="{Binding SmsList}"
                       HasUnevenRows="True"
-                      IsPullToRefreshEnabled="True">
+                      IsPullToRefreshEnabled="True"
+                      RefreshCommand="{Binding GetSmsListCommand}"
+                      IsRefreshing="{Binding IsRefreshing, Mode=OneWay}">
                 <ListView.Header>
                     <StackLayout Orientation="Horizontal">
                         <Label Text="SMS"
                                VerticalOptions="CenterAndExpand" 
-                               HorizontalOptions="CenterAndExpand" />
-                        <Label Text="Auto Update?"
-                               HorizontalOptions="End"/>
-                        <Switch IsToggled="{Binding AutoUpdate}"
-                                HorizontalOptions="End"/>
+                               HorizontalOptions="StartAndExpand" />
+                        
+                        <Label Text="Send?"
+                               HorizontalOptions="End" VerticalOptions="CenterAndExpand"/>
+                        <Switch IsToggled="{Binding CanSend}"
+                                HorizontalOptions="End" VerticalOptions="CenterAndExpand"/>
+
+                        <AbsoluteLayout HorizontalOptions="End" VerticalOptions="CenterAndExpand"
+                                        HeightRequest="30" WidthRequest="30"
+                                        Padding="3">
+                            <Image Source="{Binding ConnectionState, Converter={StaticResource ConnectionStateToImageSourceConverter}}"
+                                   AbsoluteLayout.LayoutFlags="PositionProportional" AbsoluteLayout.LayoutBounds="0.5,0.5">
+                                <Image.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ShowConnectionStateCommand}"/>
+                                </Image.GestureRecognizers>
+                            </Image>
+                        </AbsoluteLayout>
+
                     </StackLayout>
                 </ListView.Header>
                 <ListView.ItemTemplate>
