@@ -9,7 +9,7 @@ using System.Collections.ObjectModel;
 
 namespace B4.EE.BouteD.Services
 {
-    public class SmsFromSignalRService : ISmsService
+    public class SmsFromSignalRService : ISmsDataService
     {
         private SignalRService _signalRService;
 

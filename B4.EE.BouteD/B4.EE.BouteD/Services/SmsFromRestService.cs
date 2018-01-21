@@ -14,7 +14,7 @@ using Xamarin.Forms;
 
 namespace B4.EE.BouteD.Services
 {
-    class SmsFromRestService : ISmsService
+    class SmsFromRestService : ISmsDataService
     {
 
         public async Task<string> GetJSON(string path)

@@ -44,7 +44,7 @@
     <Compile Include="Converters\StatusToColorConverter.cs" />
     <Compile Include="Helpers\Settings.cs" />
     <Compile Include="Models\SmsDTOWithOperation.cs" />
-    <Compile Include="Services\Abstract\ISmsService.cs" />
+    <Compile Include="Services\Abstract\ISmsDataService.cs" />
     <Compile Include="Services\SendSmsService.cs" />
     <Compile Include="Services\SignalRService.cs" />
     <Compile Include="Services\SmsFromSignalRService.cs" />

@@ -191,10 +191,10 @@ namespace B4.EE.BouteD.Services
             _hubProxy.On<List<StatusDTO>>("GetStatusList", statusList =>
                 MessagingCenter.Send(statusList, MessagingCenterConstants.STATUS_LIST_GET));
 
-            _hubProxy.On<List<SmsDTO>>("UpdateSms", sms =>
+            _hubProxy.On<SmsDTO>("UpdateSms", sms =>
                 MessagingCenter.Send(sms, MessagingCenterConstants.SMS_PUT));
 
-            _hubProxy.On<List<SmsDTO>>("DeleteSms", sms =>
+            _hubProxy.On<SmsDTO>("DeleteSms", sms =>
                 MessagingCenter.Send(sms, MessagingCenterConstants.SMS_DELETE));
 
         }

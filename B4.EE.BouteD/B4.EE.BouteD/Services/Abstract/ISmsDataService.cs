@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace B4.EE.BouteD.Services.Abstract
 {
-    public interface ISmsService
+    public interface ISmsDataService
     {
         void GetSmsList();
         void UpdateSms(SmsDTO sms);

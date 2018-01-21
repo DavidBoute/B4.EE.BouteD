@@ -1,6 +1,7 @@
 ﻿using B4.EE.BouteD.Constants;
 using B4.EE.BouteD.Models;
 using B4.EE.BouteD.Services;
+using B4.EE.BouteD.Services.Abstract;
 using FreshMvvm;
 using Plugin.Messaging;
 using Plugin.Permissions;
@@ -19,7 +20,7 @@ namespace B4.EE.BouteD.ViewModels
     public class SmsViewModel : FreshBasePageModel
     {
         private bool _IsFirstLoad = true;
-        private SmsFromRestService _smsRestService;
+        private ISmsDataService _smsDataService;
         private SignalRService _signalRService;
 
         private bool _canSend;
@@ -81,7 +82,7 @@ namespace B4.EE.BouteD.ViewModels
                     {
                         sms.StatusId = newStatus.Id;
                         sms.StatusName = newStatus.Name;
-                        _smsRestService.UpdateSms(sms);
+                        _smsDataService.UpdateSms(sms);
                     } 
                 }
             });
@@ -90,20 +91,20 @@ namespace B4.EE.BouteD.ViewModels
             async () =>
             {
                 IsRefreshing = true;
-                _signalRService.RequestSmsList();
+                _smsDataService.GetSmsList();
             },
             () => { return !IsRefreshing; });
 
         public ICommand DeleteSmsCommand => new Command(
             (sms) =>
             {
-                _smsRestService.DeleteSms(sms as SmsDTO);
+                _smsDataService.DeleteSms(sms as SmsDTO);
             });
 
         public ICommand GetStatusListCommand => new Command(
            () =>
            {
-               _smsRestService.GetStatusList();
+               _smsDataService.GetStatusList();
            });
 
         public ICommand OpenSettingsCommand => new Command(
@@ -131,7 +132,7 @@ namespace B4.EE.BouteD.ViewModels
                             sms.StatusName = newStatus.Name;
                         }
 
-                        _smsRestService.UpdateSms(sms);
+                        _smsDataService.UpdateSms(sms);
                     }
                 }
             });
@@ -171,7 +172,7 @@ namespace B4.EE.BouteD.ViewModels
             SmsList = new ObservableCollection<SmsDTO>();
             ConnectionState = SignalRConnectionState.Closed;
 
-            _smsRestService = SmsFromRestService.Instance();
+            _smsDataService = SmsFromSignalRService.Instance();
             _signalRService = SignalRService.Instance();
 
             // Events vanuit services
@@ -214,7 +215,7 @@ namespace B4.EE.BouteD.ViewModels
                                     smsDTO.StatusName = newStatus.Name;
                                 }
 
-                                _smsRestService.UpdateSms(smsDTO);
+                                _smsDataService.UpdateSms(smsDTO);
                             }
 
                             // Waarden sms in lijst aanpassen
