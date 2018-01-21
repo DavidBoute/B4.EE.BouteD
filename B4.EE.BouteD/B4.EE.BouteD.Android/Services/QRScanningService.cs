@@ -1,4 +1,5 @@
 ﻿using B4.EE.BouteD.Services;
+using B4.EE.BouteD.Services.Abstract;
 using System.Threading.Tasks;
 using Xamarin.Forms;
 using ZXing.Mobile;
@@ -11,16 +12,15 @@ namespace B4.EE.BouteD.Droid.Services
     {
         public async Task<string> ScanAsync()
         {
-            var optionsDefault = new MobileBarcodeScanningOptions();
-            var optionsCustom = new MobileBarcodeScanningOptions();
-
             var scanner = new MobileBarcodeScanner()
             {
-                TopText = "Scan the QR Code",
-                BottomText = "Please Wait",
-                FlashButtonText = "Illuminate",
-                CancelButtonText = "Back"
+                CancelButtonText = "Cancel",
+                FlashButtonText = "Flash"
             };
+
+            var customOverlay = new ZxingOverlayView(Android.App.Application.Context, scanner);
+            scanner.CustomOverlay = customOverlay;
+            scanner.UseCustomOverlay = true;
 
             try
             {
@@ -33,5 +33,7 @@ namespace B4.EE.BouteD.Droid.Services
                 return string.Empty;
             } 
         }
+
+
     }
 } 

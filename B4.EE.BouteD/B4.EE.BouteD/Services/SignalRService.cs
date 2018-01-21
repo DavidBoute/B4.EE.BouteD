@@ -1,8 +1,10 @@
-﻿using B4.EE.BouteD.Constants;
+﻿
+using B4.EE.BouteD.Constants;
 using B4.EE.BouteD.Models;
 using FreshMvvm;
 using Microsoft.AspNet.SignalR.Client;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Xamarin.Forms;
@@ -11,28 +13,73 @@ namespace B4.EE.BouteD.Services
 {
     public class SignalRService
     {
-        private FreshBasePageModel _pageModel;
 
         private HubConnection _hubConnection;
         private IHubProxy _hubProxy;
 
-        // Methods to call on the server
-        public void Send(string name, string message)
+        // Methods to invoke on the server
+        #region Server Methods
+
+        public void Send(string message)
         {
-            // Invoke the 'Send' method on the server
-            _hubProxy.Invoke("Send", name, message);
+            Task request = new Task(() => _hubProxy.Invoke("Send", message));
+            InvokeServerMethod(request);
         }
 
-        public void NotifyChange(SmsDTOWithClient smsDTOWithClient)
+        public void NotifyChange(SmsDTOWithOperation smsDTOWithOperation)
         {
-            // Invoke the 'Send' method on the server
-            _hubProxy.Invoke("NotifyChange", smsDTOWithClient);
+            Task request = new Task(() => _hubProxy.Invoke("NotifyChange", smsDTOWithOperation));
+            InvokeServerMethod(request);
         }
+
+        public void RequestSmsList()
+        {
+            Task request = new Task(() => _hubProxy.Invoke("RequestSmsList", false)); // parameter includeCreated
+            InvokeServerMethod(request);
+        }
+
+        public void RequestStatusList()
+        {
+            Task request = new Task(() => _hubProxy.Invoke("RequestStatusList"));
+            InvokeServerMethod(request);
+        }
+
+        public void RequestUpdateSms(SmsDTO smsDTO)
+        {
+            Task request = new Task(() => _hubProxy.Invoke("RequestUpdateSms", smsDTO));
+            InvokeServerMethod(request);
+        }
+
+        public void RequestDeleteSms(SmsDTO smsDTO)
+        {
+            Task request = new Task(() => _hubProxy.Invoke("RequestDeleteSms", smsDTO));
+            InvokeServerMethod(request);
+        }
+
+        public async void InvokeServerMethod(Task request)
+        {
+            if (_hubConnection.State == ConnectionState.Connected)
+            {
+                request.Start();
+            }
+            else if (_hubConnection.State == ConnectionState.Connecting
+                    || _hubConnection.State == ConnectionState.Reconnecting)
+            {
+                await Task.Delay(500);
+                InvokeServerMethod(request);
+            }
+        }
+
+        #endregion
+
 
         async void StartConnection()
         {
+            // Get instance of ConnectionSettings
+            ConnectionSettings connectionSettings = ConnectionSettings.Instance();
+
             // Connect to the server
-            _hubConnection = new HubConnection($"{ConnectionSettings.Prefix}{ConnectionSettings.Host}:{ConnectionSettings.Port}");
+            _hubConnection = new HubConnection($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}");
 
             // Create a proxy to the 'ServerSentEventsHub' SignalR Hub
             _hubProxy = _hubConnection.CreateHubProxy("ServerSentEventsHub");
@@ -47,12 +94,14 @@ namespace B4.EE.BouteD.Services
             {
                 OnError(ex);
             }
-                         
+
             // Add EventHandlers
             AddEventHandlers();
         }
 
-        // EventHandlers
+        // LifeTime Event Handlers
+        #region LifeTime Event Handlers
+
         async void OnStateChanged(StateChange stateChange)
         {
             if (stateChange.NewState == ConnectionState.Connected)
@@ -67,7 +116,7 @@ namespace B4.EE.BouteD.Services
 
         async void OnConnectionSlow()
         {
-            Debug.WriteLine(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") +": Signal R Connection slow");
+            Debug.WriteLine(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + ": Signal R Connection slow");
             MessagingCenter.Send(this, SignalRConnectionState.Slow);
         }
 
@@ -105,6 +154,8 @@ namespace B4.EE.BouteD.Services
             }
         }
 
+        #endregion
+
         void AddEventHandlers()
         {
             // Signal R Lifetime Events
@@ -114,20 +165,69 @@ namespace B4.EE.BouteD.Services
             _hubConnection.Reconnecting += OnReconnecting;
             _hubConnection.Closed += OnClosed;
             _hubConnection.Error += OnError;
-            
-            // Events voor berichten
-            _hubProxy.On<SmsDTOWithClient>("notifyChangeToPage", smsDTOWithClient =>
-                  MessagingCenter.Send(smsDTOWithClient, smsDTOWithClient.Operation));
 
-            _hubProxy.On<string>("addNewMessageToPage", message =>
-                    _pageModel.CoreMethods.DisplayAlert("New message from server", string.Format("Received Msg: {0}\r\n", message), "OK"));
+            // Server Sent Events
+            _hubProxy.On<SmsDTOWithOperation>("notifyChangeToPage", smsDTOWithOperation =>
+                {
+                    switch (smsDTOWithOperation.Operation)
+                    {
+                        case "PUT":
+                            MessagingCenter.Send(smsDTOWithOperation.SmsDTO, MessagingCenterConstants.SMS_PUT);
+                            break;
+                        case "DELETE":
+                            MessagingCenter.Send(smsDTOWithOperation.SmsDTO, MessagingCenterConstants.SMS_DELETE);
+                            break;
+                        default:
+                            break;
+                    }
+                });
+
+            _hubProxy.On<string>("displayMessage", message =>
+                MessagingCenter.Send(message, MessagingCenterConstants.MESSAGE));
+
+            _hubProxy.On<List<SmsDTO>>("GetSmsList", smsList =>
+                MessagingCenter.Send(smsList, MessagingCenterConstants.SMS_LIST_GET));
+
+            _hubProxy.On<List<StatusDTO>>("GetStatusList", statusList =>
+                MessagingCenter.Send(statusList, MessagingCenterConstants.STATUS_LIST_GET));
+
+            _hubProxy.On<List<SmsDTO>>("UpdateSms", sms =>
+                MessagingCenter.Send(sms, MessagingCenterConstants.SMS_PUT));
+
+            _hubProxy.On<List<SmsDTO>>("DeleteSms", sms =>
+                MessagingCenter.Send(sms, MessagingCenterConstants.SMS_DELETE));
+
         }
 
-        // Constructor
-        public SignalRService(FreshBasePageModel pageModel)
+        // Singleton implementation
+        #region Singleton implementation
+
+        private static SignalRService _instance
+            = new SignalRService();
+
+        public static SignalRService Instance()
         {
-            _pageModel = pageModel;
+            if (_instance == null)
+            {
+                _instance = new SignalRService();
+            }
+
+            return _instance;
+        }
+
+        #endregion
+
+
+        // private constructor
+        private SignalRService()
+        {
             StartConnection();
+
+            MessagingCenter.Subscribe<ConnectionSettings>(this, "UpdateConnectionSettings",
+                (connectionSettings) =>
+                {
+                    StartConnection();
+                });
         }
     }
 }

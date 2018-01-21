@@ -1,19 +1,27 @@
-﻿using B4.EE.BouteD.Models;
+﻿using B4.EE.BouteD.Constants;
+using B4.EE.BouteD.Models;
+using B4.EE.BouteD.Services.Abstract;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Xamarin.Forms;
 
 namespace B4.EE.BouteD.Services
 {
-    class SmsFromRestService
+    class SmsFromRestService : ISmsService
     {
+
         public async Task<string> GetJSON(string path)
         {
-            var request = WebRequest.Create($"{ConnectionSettings.Prefix}{ConnectionSettings.Host}:{ConnectionSettings.Port}/{ConnectionSettings.Path + path}");
+            ConnectionSettings connectionSettings = ConnectionSettings.Instance();
+
+            var request = WebRequest.Create($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}/{connectionSettings.Path + path}");
             request.ContentType = "application/json";
             request.Method = "GET";
 
@@ -47,9 +55,9 @@ namespace B4.EE.BouteD.Services
 
         }
 
-        public async Task<ObservableCollection<SmsDTO>> GetSmsList()
+        public async void GetSmsList()
         {
-            ObservableCollection<SmsDTO> smsList = new ObservableCollection<SmsDTO>();
+            List<SmsDTO> smsList = new List<SmsDTO>();
 
             string content = await GetJSON("sms");
 
@@ -74,12 +82,14 @@ namespace B4.EE.BouteD.Services
                 }
             }
 
-            return smsList;
+            MessagingCenter.Send<List<SmsDTO>>(smsList, MessagingCenterConstants.SMS_LIST_GET);
         }
 
-        public async Task<string> UpdateSms(SmsDTO sms)
+        public async void UpdateSms(SmsDTO sms)
         {
-            var request = (HttpWebRequest)WebRequest.Create($"{ConnectionSettings.Prefix}{ConnectionSettings.Host}:{ConnectionSettings.Port}/{ConnectionSettings.Path}sms/{sms.Id.ToString()}");
+            ConnectionSettings connectionSettings = ConnectionSettings.Instance();
+
+            var request = (HttpWebRequest)WebRequest.Create($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}/{connectionSettings.Path}sms/{sms.Id}");
             request.ContentType = "application/json";
             request.Method = "PUT";
 
@@ -95,21 +105,27 @@ namespace B4.EE.BouteD.Services
             {
                 using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
                 {
-                    if (response.StatusCode != HttpStatusCode.OK)
-                        Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);                        
-                    return response.StatusCode.ToString();
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        MessagingCenter.Send<SmsDTO>(sms, MessagingCenterConstants.SMS_PUT);
+                    } 
+                    else
+                    {
+                        Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode.ToString());                      
+                    }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                return null;
+                Debug.WriteLine("Error fetching data. Exception: {0}", ex.Message);
             }
-
         }
 
-        public async Task<string> DeleteSms(string guid)
+        public async void DeleteSms(SmsDTO sms)
         {
-            var request = WebRequest.Create($"{ConnectionSettings.Prefix}{ConnectionSettings.Host}:{ConnectionSettings.Port}/{ConnectionSettings.Path}sms/{guid}");
+            ConnectionSettings connectionSettings = ConnectionSettings.Instance();
+
+            var request = WebRequest.Create($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}/{connectionSettings.Path}sms/{sms.Id}");
             request.ContentType = "application/json";
             request.Method = "DELETE";
 
@@ -117,21 +133,25 @@ namespace B4.EE.BouteD.Services
             {
                 using (HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse)
                 {
-                    if (response.StatusCode != HttpStatusCode.OK)
-                        Debug.WriteLine("Error fetching data. Server returned status code: {0}", response.StatusCode);
-                    return response.StatusCode.ToString();
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        MessagingCenter.Send<SmsDTO>(sms, MessagingCenterConstants.SMS_DELETE);
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Error deleting data. Server returned status code: {0}", response.StatusCode.ToString());
+                    }
                 }
             }
             catch (System.Exception ex)
             {
-                return null;
+                Debug.WriteLine("Error deleting data. Exception: {0}", ex.Message);
             }
-
         }
 
-        public async Task<ObservableCollection<StatusDTO>> GetStatusList()
+        public async void GetStatusList()
         {
-            ObservableCollection<StatusDTO> statusList = new ObservableCollection<StatusDTO>();
+            List<StatusDTO> statusList = new List<StatusDTO>();
 
             string content = await GetJSON("status");
 
@@ -149,8 +169,28 @@ namespace B4.EE.BouteD.Services
                 }
             }
 
-            return statusList;
+            MessagingCenter.Send<List<StatusDTO>>(statusList, MessagingCenterConstants.STATUS_LIST_GET);
         }
 
+        // Singleton implementation
+        #region Singleton implementation
+
+        private static SmsFromRestService _instance
+            = new SmsFromRestService();
+
+        public static SmsFromRestService Instance()
+        {
+            if (_instance == null)
+            {
+                _instance = new SmsFromRestService();
+            }
+
+            return _instance;
+        }
+
+        // private constructor
+        private SmsFromRestService() { }
+
+        #endregion
     }
 }

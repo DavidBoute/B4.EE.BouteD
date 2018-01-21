@@ -8,7 +8,9 @@ using Plugin.Permissions.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Xamarin.Forms;
 
@@ -16,7 +18,8 @@ namespace B4.EE.BouteD.ViewModels
 {
     public class SmsViewModel : FreshBasePageModel
     {
-        private SmsFromRestService _smsService;
+        private bool _IsFirstLoad = true;
+        private SmsFromRestService _smsRestService;
         private SignalRService _signalRService;
 
         private bool _canSend;
@@ -67,149 +70,40 @@ namespace B4.EE.BouteD.ViewModels
         public ICommand SendSmsCommand => new Command(
             async (smsDto) =>
             {
-                var sms = smsDto as SmsDTO;
+                SmsDTO sms = smsDto as SmsDTO;
                 if (sms != null)
                 {
-                    var smsMessenger = CrossMessaging.Current.SmsMessenger;
-                    StatusDTO newStatus;
-                    if (smsMessenger.CanSendSmsInBackground)
-                    {
-                        try
-                        {
-                            if (CanSend)
-                            {
+                    SendSmsService smsSendService = new SendSmsService(CanSend);
+                    string smsSendresult = await smsSendService.Send(sms);
 
-                                try
-                                {
-                                    var status = await CrossPermissions.Current.CheckPermissionStatusAsync(Permission.Sms);
-                                    if (status != PermissionStatus.Granted)
-                                    {
-                                        var results = await CrossPermissions.Current.RequestPermissionsAsync(Permission.Sms);
-                                        //Best practice to always check that the key exists
-                                        if (results.ContainsKey(Permission.Sms))
-                                            status = results[Permission.Sms];
-                                    }
-
-                                    if (status == PermissionStatus.Granted)
-                                    {
-                                        smsMessenger.SendSmsInBackground("+32494240152", "Well hello there from Xam.Messaging.Plugin");
-                                    }
-                                    else if (status != PermissionStatus.Unknown)
-                                    {
-                                        await CoreMethods.DisplayAlert("Sms toestemming geweigerd", "Probeer later opnieuw.", "OK");
-                                    }
-                                }
-                                catch (Exception)
-                                {
-                                }
-
-                            }
-                            else
-                                await CoreMethods.DisplayAlert("Send SMS success", sms.ContactFullName + " - " + sms.Message, "Cancel");
-
-                            newStatus = StatusList.SingleOrDefault(x => x.Name == "Sent");
-                        }
-                        catch (Exception)
-                        {
-                            await CoreMethods.DisplayAlert("Send SMS failure", "Kan SMS niet verzenden", "Cancel");
-
-                            newStatus = StatusList.SingleOrDefault(x => x.Name == "Error");
-                        }
-                    }
-                    else
-                    {
-                        await CoreMethods.DisplayAlert("Send SMS failure", "SMS niet mogelijk", "Cancel");
-
-                        newStatus = StatusList.SingleOrDefault(x => x.Name == "Error");
-                    }
+                    StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == smsSendresult);
                     if (newStatus != null)
                     {
                         sms.StatusId = newStatus.Id;
                         sms.StatusName = newStatus.Name;
-                    }
-
-                    string res = await _smsService.UpdateSms(sms);
-                    if (res == "OK")
-                    {
-                        _signalRService.NotifyChange(new SmsDTOWithClient
-                        {
-                            Operation = "PUT",
-                            Client = "Xamarin",
-                            SmsDTO = sms
-                        });
-                    }
-
+                        _smsRestService.UpdateSms(sms);
+                    } 
                 }
             });
 
         public ICommand GetSmsListCommand => new Command(
             async () =>
             {
-                if (SmsList.Count != 0)
-                {
-                    var newList = await _smsService.GetSmsList();
-
-                    // Elementen toevoegen/aanpassen
-                    foreach (SmsDTO sms in newList)
-                    {
-                        var foundSms = SmsList.FirstOrDefault(x => x.Id == sms.Id);
-                        if (foundSms != null) // Update
-                        {
-                            if (!sms.IsEqual(foundSms))
-                            {
-                                int i = SmsList.IndexOf(foundSms);
-                                SmsList[i] = sms;
-                            }
-                        }
-                        else // Insert
-                        {
-                            SmsList.Add(sms);
-                        }
-                    }
-
-                    // Elementen verwijderen
-                    for (int i = SmsList.Count - 1; i >= 0; i--)
-                    {
-                        var sms = SmsList.ElementAt(i);
-                        var foundSms = newList.FirstOrDefault(x => x.Id == sms.Id);
-                        if (foundSms == null) // Delete
-                        {
-                            SmsList.Remove(sms);
-                        }
-                    }
-                }
-                else
-                {
-                    SmsList = await _smsService.GetSmsList();
-                }
-
-                IsRefreshing = false;
+                IsRefreshing = true;
+                _signalRService.RequestSmsList();
             },
             () => { return !IsRefreshing; });
 
         public ICommand DeleteSmsCommand => new Command(
-            async (guid) =>
+            (sms) =>
             {
-                string res = await _smsService.DeleteSms(guid as string);
-                if (res == "OK")
-                {
-                    SmsDTO smsToDelete = SmsList.SingleOrDefault(x => x.Id == guid as string);
-
-                    _signalRService.NotifyChange(new SmsDTOWithClient
-                    {
-                        Operation = "DELETE",
-                        Client = "Xamarin",
-                        SmsDTO = smsToDelete
-                    });
-
-                    SmsList.Remove(smsToDelete);
-                }
+                _smsRestService.DeleteSms(sms as SmsDTO);
             });
 
         public ICommand GetStatusListCommand => new Command(
-           async () =>
+           () =>
            {
-               StatusList = await _smsService.GetStatusList();
+               _smsRestService.GetStatusList();
            });
 
         public ICommand OpenSettingsCommand => new Command(
@@ -237,16 +131,7 @@ namespace B4.EE.BouteD.ViewModels
                             sms.StatusName = newStatus.Name;
                         }
 
-                        string res = await _smsService.UpdateSms(sms);
-                        if (res == "OK")
-                        {
-                            _signalRService.NotifyChange(new SmsDTOWithClient
-                            {
-                                Operation = "PUT",
-                                Client = "Xamarin",
-                                SmsDTO = sms
-                            });
-                        }
+                        _smsRestService.UpdateSms(sms);
                     }
                 }
             });
@@ -266,8 +151,18 @@ namespace B4.EE.BouteD.ViewModels
         // Init
         public override void Init(object initData)
         {
-            GetSmsListCommand.Execute(null);
-            GetStatusListCommand.Execute(null);
+
+        }
+
+        protected override async void ViewIsAppearing(object sender, EventArgs e)
+        {
+            if (_IsFirstLoad)
+            {
+                await Task.Delay(1000);
+                GetSmsListCommand.Execute(null);
+                GetStatusListCommand.Execute(null);
+                _IsFirstLoad = false;
+            }
         }
 
         // Constructor
@@ -276,68 +171,82 @@ namespace B4.EE.BouteD.ViewModels
             SmsList = new ObservableCollection<SmsDTO>();
             ConnectionState = SignalRConnectionState.Closed;
 
-            _smsService = new SmsFromRestService();
-            _signalRService = new SignalRService(this);
+            _smsRestService = SmsFromRestService.Instance();
+            _signalRService = SignalRService.Instance();
 
-            // Server Sent Events
-            #region Server Sent Events
-            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "PUT",
-                (smsDTOWithClient) =>
+            // Events vanuit services
+            #region Events Services
+
+            MessagingCenter.Subscribe<List<SmsDTO>>(this, MessagingCenterConstants.SMS_LIST_GET,
+                (smsDTOList) =>
+                {
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        SmsList = new ObservableCollection<SmsDTO>(smsDTOList);
+                        IsRefreshing = false;
+                    });
+                });
+
+            MessagingCenter.Subscribe<List<StatusDTO>>(this, MessagingCenterConstants.STATUS_LIST_GET,
+                (statusDTOList) =>
+                {
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        StatusList = statusDTOList;
+                    });
+                });
+
+            MessagingCenter.Subscribe<SmsDTO>(this, MessagingCenterConstants.SMS_PUT,
+                (smsDTO) =>
                 {
                     Device.BeginInvokeOnMainThread(async () =>
                     {
-                        var foundSms = SmsList.FirstOrDefault(x => x.Id == smsDTOWithClient.SmsDTO.Id);
+                        var foundSms = SmsList.FirstOrDefault(x => x.Id == smsDTO.Id);
                         if (foundSms != null) // Als sms al bestaat: updaten
                         {
                             // Status aanpassen naar Pending om aan te duiden dat de telefoon aan het verwerken is
-                            if (smsDTOWithClient.SmsDTO.StatusName == "Queued")
+                            if (smsDTO.StatusName == "Queued")
                             {
                                 StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == "Pending");
                                 if (newStatus != null)
                                 {
-                                    smsDTOWithClient.SmsDTO.StatusId = newStatus.Id;
-                                    smsDTOWithClient.SmsDTO.StatusName = newStatus.Name;
+                                    smsDTO.StatusId = newStatus.Id;
+                                    smsDTO.StatusName = newStatus.Name;
                                 }
 
-                                string res = await _smsService.UpdateSms(smsDTOWithClient.SmsDTO);
-                                if (res == "OK")
-                                {
-                                    _signalRService.NotifyChange(new SmsDTOWithClient
-                                    {
-                                        Operation = "PUT",
-                                        Client = "Xamarin",
-                                        SmsDTO = smsDTOWithClient.SmsDTO
-                                    });
-                                }
+                                _smsRestService.UpdateSms(smsDTO);
                             }
 
-                            if (!smsDTOWithClient.SmsDTO.IsEqual(foundSms))
+                            // Waarden sms in lijst aanpassen
+                            // nieuwe verwijzing veroorzaakt fouten
+                            if (!smsDTO.IsEqual(foundSms))
                             {
-                                foundSms.CopyFrom(smsDTOWithClient.SmsDTO);
+                                foundSms.CopyFrom(smsDTO);
                             }
                         }
                         else // Als hij nog niet bestaat: invoegen indien niet status Created
                         {
-                            if (smsDTOWithClient.SmsDTO.StatusName != "Created")
+                            if (smsDTO.StatusName != "Created")
                             {
-                                SmsList.Add(smsDTOWithClient.SmsDTO);
+                                SmsList.Add(smsDTO);
                             }
                         }
                     });
                 });
 
-            MessagingCenter.Subscribe<SmsDTOWithClient>(this, "DELETE",
-                (smsDTOWithClient) =>
+            MessagingCenter.Subscribe<SmsDTO>(this, MessagingCenterConstants.SMS_DELETE,
+                (smsDTO) =>
                 {
                     Device.BeginInvokeOnMainThread(() =>
                     {
-                        var foundSms = SmsList.FirstOrDefault(x => x.Id == smsDTOWithClient.SmsDTO.Id);
+                        var foundSms = SmsList.FirstOrDefault(x => x.Id == smsDTO.Id);
                         if (foundSms != null)
                         {
                             SmsList.Remove(foundSms);
                         }
                     });
                 });
+
             #endregion
 
             // ConnectionState updates

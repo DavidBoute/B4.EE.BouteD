@@ -1,5 +1,6 @@
 ﻿using B4.EE.BouteD.Models;
 using B4.EE.BouteD.Services;
+using B4.EE.BouteD.Services.Abstract;
 using FreshMvvm;
 using Newtonsoft.Json;
 using System;
@@ -46,7 +47,7 @@ namespace B4.EE.BouteD.ViewModels
 
                     if (result != String.Empty)
                     {
-                        ConnectionSettingsDTO settings = JsonConvert.DeserializeObject<ConnectionSettingsDTO>(result);
+                        Models.ConnectionSettingsDTO settings = JsonConvert.DeserializeObject<Models.ConnectionSettingsDTO>(result);
                         Prefix = settings.Prefix;
                         Host = settings.Host;
                         Port = settings.Port;
@@ -66,10 +67,8 @@ namespace B4.EE.BouteD.ViewModels
         public ICommand SaveSettingsCommand => new Command(
             () =>
             {
-                ConnectionSettings.Prefix = Prefix;
-                ConnectionSettings.Host = Host;
-                ConnectionSettings.Port = Port;
-                ConnectionSettings.Path = Path;
+                ConnectionSettings connectionSettings = ConnectionSettings.Instance();
+                connectionSettings.Update(Prefix, Host, Port, Path);
 
                 CoreMethods.PopPageModel();
             });
@@ -79,10 +78,12 @@ namespace B4.EE.BouteD.ViewModels
         {
             try
             {
-                Prefix = ConnectionSettings.Prefix;
-                Host = ConnectionSettings.Host;
-                Port = ConnectionSettings.Port;
-                Path = ConnectionSettings.Path;
+                ConnectionSettings connectionSettings = ConnectionSettings.Instance();
+
+                Prefix = connectionSettings.Prefix;
+                Host = connectionSettings.Host;
+                Port = connectionSettings.Port;
+                Path = connectionSettings.Path;
             }
             catch (Exception)
             {

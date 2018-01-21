@@ -38,12 +38,16 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Constants\MessagingCenterConstants.cs" />
     <Compile Include="Constants\SignalRConnectionState.cs" />
     <Compile Include="Converters\ConnectionStateToImageSourceConverter.cs" />
     <Compile Include="Converters\StatusToColorConverter.cs" />
     <Compile Include="Helpers\Settings.cs" />
-    <Compile Include="Models\SmsDTOWithClient.cs" />
+    <Compile Include="Models\SmsDTOWithOperation.cs" />
+    <Compile Include="Services\Abstract\ISmsService.cs" />
+    <Compile Include="Services\SendSmsService.cs" />
     <Compile Include="Services\SignalRService.cs" />
+    <Compile Include="Services\SmsFromSignalRService.cs" />
     <Compile Include="Views\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
@@ -52,7 +56,7 @@
     <Compile Include="Models\SmsDTO.cs" />
     <Compile Include="Models\StatusDTO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Services\IQRScanningService.cs" />
+    <Compile Include="Services\Abstract\IQRScanningService.cs" />
     <Compile Include="Services\SmsFromRestService.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\SmsViewModel.cs" />
@@ -135,6 +139,7 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Import Project="..\..\packages\Xamarin.Forms.2.5.0.121934\build\portable-win+net45+wp80+win81+wpa81\Xamarin.Forms.targets" Condition="Exists('..\..\packages\Xamarin.Forms.2.5.0.121934\build\portable-win+net45+wp80+win81+wpa81\Xamarin.Forms.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

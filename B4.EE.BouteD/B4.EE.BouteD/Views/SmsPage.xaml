@@ -59,7 +59,7 @@
                                           CommandParameter="{Binding .}"/>
                                 <MenuItem Text="Delete" IsDestructive="True"
                                           Command="{Binding BindingContext.DeleteSmsCommand, Source={x:Reference Page}}"
-                                          CommandParameter="{Binding Id}"/>
+                                          CommandParameter="{Binding .}"/>
                             </ViewCell.ContextActions>
                             <Grid>
                                 <Grid.RowDefinitions>

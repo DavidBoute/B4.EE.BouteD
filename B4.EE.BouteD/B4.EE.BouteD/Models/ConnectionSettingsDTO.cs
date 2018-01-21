@@ -1,4 +1,6 @@
-﻿namespace B4.EE.BouteD.Models
+﻿using Xamarin.Forms;
+
+namespace B4.EE.BouteD.Models
 {
     public class ConnectionSettingsDTO
     {

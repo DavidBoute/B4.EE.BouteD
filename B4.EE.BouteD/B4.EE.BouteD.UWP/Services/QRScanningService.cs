@@ -1,4 +1,5 @@
 ﻿using B4.EE.BouteD.Services;
+using B4.EE.BouteD.Services.Abstract;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,11 +24,11 @@ namespace B4.EE.BouteD.UWP.Services
 
             var scanner = new MobileBarcodeScanner()
             {
-                TopText = "Scan the QR Code",
-                BottomText = "Please Wait",
+                CancelButtonText = "Cancel",
+                FlashButtonText = "Flash"
             };
 
-            scanner.CustomOverlay = CreateCustomOverlay(scanner);
+            scanner.CustomOverlay = new ZXingOverlayUIElement(scanner);
             scanner.UseCustomOverlay = true;
 
             try
@@ -43,56 +44,5 @@ namespace B4.EE.BouteD.UWP.Services
             }
         }
 
-        private UIElement CreateCustomOverlay(MobileBarcodeScanner scanner)
-        {
-            var customOverlay = new Grid()
-            {
-                Background = new SolidColorBrush(Colors.Transparent),
-            };
-            customOverlay.RowDefinitions.Add(new RowDefinition());
-            customOverlay.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Auto) });
-            customOverlay.ColumnDefinitions.Add(new ColumnDefinition());
-            customOverlay.ColumnDefinitions.Add(new ColumnDefinition());
-
-            // Cancel knop
-            var btnCancel = new Button()
-            {
-                Background = new SolidColorBrush(Colors.Black),
-                Content = "Cancel",
-                Foreground = new SolidColorBrush(Colors.White),
-                BorderBrush = new SolidColorBrush(Colors.White),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-            btnCancel.Click += (s, e2) =>
-            {
-                scanner.Cancel();
-            };
-            customOverlay.Children.Add(btnCancel);
-            Grid.SetRow(btnCancel, 1);
-            Grid.SetColumn(btnCancel, 1);
-
-            // Knop voor flash
-            var btnFlash = new Button()
-            {
-                Background = new SolidColorBrush(Colors.Black),
-                Content = "Flash",
-                Foreground = new SolidColorBrush(Colors.White),
-                BorderBrush = new SolidColorBrush(Colors.White),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-            btnFlash.Click += (s, e2) =>
-            {
-                scanner.ToggleTorch();
-            };
-            customOverlay.Children.Add(btnFlash);
-            Grid.SetRow(btnFlash, 1);
-            Grid.SetColumn(btnFlash, 0);
-
-            var customOverlayPage = new Page();
-            customOverlayPage.Content = customOverlay;
-            customOverlayPage.NavigationCacheMode = Windows.UI.Xaml.Navigation.NavigationCacheMode.Enabled;
-
-            return customOverlayPage;
-        }
     }
 }
