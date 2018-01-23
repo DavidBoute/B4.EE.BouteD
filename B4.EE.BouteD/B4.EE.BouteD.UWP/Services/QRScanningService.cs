@@ -1,15 +1,7 @@
-﻿using B4.EE.BouteD.Services;
-using B4.EE.BouteD.Services.Abstract;
+﻿using B4.EE.BouteD.Services.Abstract;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Windows.UI;
 using Windows.UI.Popups;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media;
 using ZXing.Mobile;
 
 [assembly: Xamarin.Forms.Dependency(typeof(B4.EE.BouteD.UWP.Services.QRScanningService))]

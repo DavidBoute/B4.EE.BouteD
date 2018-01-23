@@ -13,10 +13,11 @@ using Android.Support.Design.Widget;
 using Android.Util;
 using Android.Support.V4.App;
 using Plugin.Permissions;
+using Plugin.CurrentActivity;
 
 namespace B4.EE.BouteD.Droid
 {
-    [Activity(Label = "B4.EE.BouteD.Android", Icon = "@drawable/icon", Theme = "@style/MyTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
+    [Activity(Label = "SmsSender", Icon = "@drawable/cellphone_logo", Theme = "@style/MyTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
     public class MainActivity : global::Xamarin.Forms.Platform.Android.FormsAppCompatActivity
     {
         protected override void OnCreate(Bundle bundle)
@@ -25,9 +26,10 @@ namespace B4.EE.BouteD.Droid
             ToolbarResource = Resource.Layout.Toolbar;
 
             base.OnCreate(bundle);
-
             global::Xamarin.Forms.Forms.Init(this, bundle);
             ZXing.Mobile.MobileBarcodeScanner.Initialize(Application);
+
+            
 
             LoadApplication(new App());
 
@@ -43,5 +45,7 @@ namespace B4.EE.BouteD.Droid
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
             PermissionsImplementation.Current.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+
+
     }
 }

@@ -1,5 +1,4 @@
-﻿using B4.EE.BouteD.Services;
-using B4.EE.BouteD.Services.Abstract;
+﻿using B4.EE.BouteD.Services.Abstract;
 using System.Threading.Tasks;
 using Xamarin.Forms;
 using ZXing.Mobile;

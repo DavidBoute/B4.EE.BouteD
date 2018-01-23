@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -14,14 +13,15 @@ using Xamarin.Forms;
 
 namespace B4.EE.BouteD.Services
 {
+    // Return data wordt via MessagingCenter doorgegeven aan Viewmodels
+    // Dit is omdat wijzigingen vanuit andere applicaties ook via die weg worden verwerkt
     class SmsFromRestService : ISmsDataService
     {
+        private ConnectionSettings _connectionSettings;
 
         public async Task<string> GetJSON(string path)
         {
-            ConnectionSettings connectionSettings = ConnectionSettings.Instance();
-
-            var request = WebRequest.Create($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}/{connectionSettings.Path + path}");
+            var request = WebRequest.Create($"{_connectionSettings.Prefix}{_connectionSettings.Host}:{_connectionSettings.Port}/{_connectionSettings.Path + path}");
             request.ContentType = "application/json";
             request.Method = "GET";
 
@@ -87,9 +87,7 @@ namespace B4.EE.BouteD.Services
 
         public async void UpdateSms(SmsDTO sms)
         {
-            ConnectionSettings connectionSettings = ConnectionSettings.Instance();
-
-            var request = (HttpWebRequest)WebRequest.Create($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}/{connectionSettings.Path}sms/{sms.Id}");
+            var request = (HttpWebRequest)WebRequest.Create($"{_connectionSettings.Prefix}{_connectionSettings.Host}:{_connectionSettings.Port}/{_connectionSettings.Path}sms/{sms.Id}");
             request.ContentType = "application/json";
             request.Method = "PUT";
 
@@ -123,9 +121,7 @@ namespace B4.EE.BouteD.Services
 
         public async void DeleteSms(SmsDTO sms)
         {
-            ConnectionSettings connectionSettings = ConnectionSettings.Instance();
-
-            var request = WebRequest.Create($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}/{connectionSettings.Path}sms/{sms.Id}");
+            var request = WebRequest.Create($"{_connectionSettings.Prefix}{_connectionSettings.Host}:{_connectionSettings.Port}/{_connectionSettings.Path}sms/{sms.Id}");
             request.ContentType = "application/json";
             request.Method = "DELETE";
 
@@ -172,25 +168,9 @@ namespace B4.EE.BouteD.Services
             MessagingCenter.Send<List<StatusDTO>>(statusList, MessagingCenterConstants.STATUS_LIST_GET);
         }
 
-        // Singleton implementation
-        #region Singleton implementation
-
-        private static SmsFromRestService _instance
-            = new SmsFromRestService();
-
-        public static SmsFromRestService Instance()
+        public SmsFromRestService(ConnectionSettings connectionSettings)
         {
-            if (_instance == null)
-            {
-                _instance = new SmsFromRestService();
-            }
-
-            return _instance;
+            _connectionSettings = connectionSettings;
         }
-
-        // private constructor
-        private SmsFromRestService() { }
-
-        #endregion
     }
 }

@@ -11,6 +11,9 @@
         </ResourceDictionary>
     </ContentPage.Resources>
     <ContentPage.ToolbarItems>
+        <!--Merk op dat de verwijzing naar de images ook verwijst naar een folder Images,
+            Android toont images zonder aanpassing van path
+            TODO: verder uitzoeken of dat een feature is-->
         <ToolbarItem Order="Primary" Icon="Images/refresh.png" Text="Refresh" Priority="0" 
                          Command="{Binding GetSmsListCommand}"/>
         <ToolbarItem Order="Primary" Icon="Images/settings.png" Text="Settings" Priority="1" 
@@ -18,35 +21,41 @@
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
         <StackLayout>
+            <StackLayout Orientation="Horizontal"
+                         BackgroundColor="AliceBlue">
+                <AbsoluteLayout HorizontalOptions="StartAndExpand" VerticalOptions="CenterAndExpand"
+                                        HeightRequest="48" WidthRequest="50"
+                                        Padding="3">
+                    <Image Source= "Images/cellphone_icon.png"
+                                   AbsoluteLayout.LayoutFlags="All" AbsoluteLayout.LayoutBounds="0,1,1,1">
+                        <Image.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowConnectionStateCommand}"/>
+                        </Image.GestureRecognizers>
+                    </Image>
+                </AbsoluteLayout>
+
+                <Label Text="Send?"
+                               HorizontalOptions="End" VerticalOptions="CenterAndExpand"/>
+                <Switch IsToggled="{Binding SendToggle}"
+                                HorizontalOptions="End" VerticalOptions="CenterAndExpand"/>
+
+                <AbsoluteLayout HorizontalOptions="End" VerticalOptions="CenterAndExpand"
+                                        HeightRequest="30" WidthRequest="30"
+                                        Padding="3">
+                    <Image Source="{Binding ConnectionState, Converter={StaticResource ConnectionStateToImageSourceConverter}}"
+                                   AbsoluteLayout.LayoutFlags="PositionProportional" AbsoluteLayout.LayoutBounds="0.5,0.5">
+                        <Image.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowConnectionStateCommand}"/>
+                        </Image.GestureRecognizers>
+                    </Image>
+                </AbsoluteLayout>
+            </StackLayout>
+
             <ListView ItemsSource="{Binding SmsList}"
                       HasUnevenRows="True"
                       IsPullToRefreshEnabled="True"
                       RefreshCommand="{Binding GetSmsListCommand}"
                       IsRefreshing="{Binding IsRefreshing, Mode=OneWay}">
-                <ListView.Header>
-                    <StackLayout Orientation="Horizontal">
-                        <Label Text="SMS"
-                               VerticalOptions="CenterAndExpand" 
-                               HorizontalOptions="StartAndExpand" />
-                        
-                        <Label Text="Send?"
-                               HorizontalOptions="End" VerticalOptions="CenterAndExpand"/>
-                        <Switch IsToggled="{Binding CanSend}"
-                                HorizontalOptions="End" VerticalOptions="CenterAndExpand"/>
-
-                        <AbsoluteLayout HorizontalOptions="End" VerticalOptions="CenterAndExpand"
-                                        HeightRequest="30" WidthRequest="30"
-                                        Padding="3">
-                            <Image Source="{Binding ConnectionState, Converter={StaticResource ConnectionStateToImageSourceConverter}}"
-                                   AbsoluteLayout.LayoutFlags="PositionProportional" AbsoluteLayout.LayoutBounds="0.5,0.5">
-                                <Image.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding ShowConnectionStateCommand}"/>
-                                </Image.GestureRecognizers>
-                            </Image>
-                        </AbsoluteLayout>
-
-                    </StackLayout>
-                </ListView.Header>
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
@@ -69,11 +78,10 @@
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
                                 <Frame OutlineColor="Black" CornerRadius="10" HasShadow="True"
-                                       Margin="5" Padding="5"
+                                       Margin="5,0,5,5" Padding="5"
                                        BackgroundColor="{Binding StatusName, Converter={StaticResource StatusToColorConverter}}">
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
@@ -83,10 +91,9 @@
 
                                         <Label Text="{Binding ContactFullName}"
                                                Grid.Row="0" Grid.Column="0"/>
-                                        <Label Text="{Binding ContactNumber}"
-                                               Grid.Row="1" Grid.Column="0"/>
                                         <Label Text="{Binding Message}"
-                                               Grid.Row="2" Grid.Column="0"/>
+                                               FontAttributes="Italic"
+                                               Grid.Row="1" Grid.Column="0"/>
                                     </Grid>
                                 </Frame>
                             </Grid>
@@ -94,7 +101,8 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-            <Button Text="Send"
+            <Button Text="Send Pending"
+                    BackgroundColor="SkyBlue"
                     Command="{Binding SendSmsListCommand}"/>
         </StackLayout>
     </ContentPage.Content>

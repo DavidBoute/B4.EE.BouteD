@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using ZXing.Mobile;
+﻿using Android.Content;
 using Android.Content.PM;
-using Android.Text;
 using Android.Graphics;
+using Android.Text;
+using Android.Views;
+using ZXing.Mobile;
 
 namespace B4.EE.BouteD.Droid.Services
 {
+    // Custom Overlay voor gebruik in Barcodescanner
+    // Aangepast van
+    // http://slackshotindustries.blogspot.be/2013/04/creating-custom-overlays-in-xzing.html
     class ZxingOverlayView : View
     {
         private Paint defaultPaint;

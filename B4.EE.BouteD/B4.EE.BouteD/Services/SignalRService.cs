@@ -13,7 +13,6 @@ namespace B4.EE.BouteD.Services
 {
     public class SignalRService
     {
-
         private HubConnection _hubConnection;
         private IHubProxy _hubProxy;
 
@@ -71,33 +70,6 @@ namespace B4.EE.BouteD.Services
         }
 
         #endregion
-
-
-        async void StartConnection()
-        {
-            // Get instance of ConnectionSettings
-            ConnectionSettings connectionSettings = ConnectionSettings.Instance();
-
-            // Connect to the server
-            _hubConnection = new HubConnection($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}");
-
-            // Create a proxy to the 'ServerSentEventsHub' SignalR Hub
-            _hubProxy = _hubConnection.CreateHubProxy("ServerSentEventsHub");
-
-            // Start the connection
-            try
-            {
-                await _hubConnection.Start();
-                OnOpened();
-            }
-            catch (Exception ex)
-            {
-                OnError(ex);
-            }
-
-            // Add EventHandlers
-            AddEventHandlers();
-        }
 
         // LifeTime Event Handlers
         #region LifeTime Event Handlers
@@ -196,38 +168,61 @@ namespace B4.EE.BouteD.Services
 
             _hubProxy.On<SmsDTO>("DeleteSms", sms =>
                 MessagingCenter.Send(sms, MessagingCenterConstants.SMS_DELETE));
+        }
 
+        async void StartConnection(ConnectionSettings connectionSettings)
+        {
+            // Connect to the server
+            _hubConnection = new HubConnection($"{connectionSettings.Prefix}{connectionSettings.Host}:{connectionSettings.Port}");
+
+            // Create a proxy to the 'ServerSentEventsHub' SignalR Hub
+            _hubProxy = _hubConnection.CreateHubProxy("ServerSentEventsHub");
+
+            // Start the connection
+            try
+            {
+                await _hubConnection.Start();
+                OnOpened();
+            }
+            catch (Exception ex)
+            {
+                OnError(ex);
+            }
+
+            // Add EventHandlers
+            AddEventHandlers();
         }
 
         // Singleton implementation
         #region Singleton implementation
 
         private static SignalRService _instance
-            = new SignalRService();
+            = new SignalRService(
+                    FreshIOC.Container.Resolve<ConnectionSettings>());
 
         public static SignalRService Instance()
         {
             if (_instance == null)
             {
-                _instance = new SignalRService();
+                _instance = new SignalRService(
+                    FreshIOC.Container.Resolve<ConnectionSettings>());
             }
 
             return _instance;
         }
 
-        #endregion
-
-
         // private constructor
-        private SignalRService()
+        private SignalRService(ConnectionSettings connectionSettings)
         {
-            StartConnection();
+            StartConnection(connectionSettings);
 
             MessagingCenter.Subscribe<ConnectionSettings>(this, "UpdateConnectionSettings",
-                (connectionSettings) =>
+                (connection) =>
                 {
-                    StartConnection();
+                    StartConnection(connection);
                 });
         }
+
+        #endregion
     }
 }

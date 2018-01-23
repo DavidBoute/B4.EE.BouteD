@@ -1,8 +1,6 @@
 ﻿using Android.Content;
 using Android.Graphics;
 using Android.Widget;
-using System;
-using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
 
 [assembly: Xamarin.Forms.ExportRenderer(typeof(Xamarin.Forms.Switch),
@@ -10,6 +8,7 @@ typeof(B4.EE.BouteD.Droid.CustomRenderers.CustomSwitchRenderer))]
 
 namespace B4.EE.BouteD.Droid.CustomRenderers
 {
+    // Past de weergave van alle Switch-elementen op Android aan
     public class CustomSwitchRenderer : SwitchRenderer
     {
         private Android.Graphics.Color redColor = new Android.Graphics.Color(215, 32, 32);

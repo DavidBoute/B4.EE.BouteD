@@ -1,14 +1,10 @@
-﻿using B4.EE.BouteD.Services.Abstract;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using B4.EE.BouteD.Models;
-using System.Collections.ObjectModel;
+﻿using B4.EE.BouteD.Models;
+using B4.EE.BouteD.Services.Abstract;
 
 namespace B4.EE.BouteD.Services
 {
+    // Return data wordt via MessagingCenter doorgegeven aan Viewmodels
+    // Dit is omdat wijzigingen vanuit andere applicaties ook via die weg worden verwerkt
     public class SmsFromSignalRService : ISmsDataService
     {
         private SignalRService _signalRService;
@@ -33,27 +29,10 @@ namespace B4.EE.BouteD.Services
             _signalRService.RequestDeleteSms(sms);
         }
 
-        // Singleton implementation
-        #region Singleton implementation
-        private static SmsFromSignalRService _instance
-            = new SmsFromSignalRService();
-
-        public static SmsFromSignalRService Instance()
-        {
-            if (_instance == null)
-            {
-                _instance = new SmsFromSignalRService();
-            }
-
-            return _instance;
-        }
-
-        // private constructor
-        private SmsFromSignalRService()
+        public SmsFromSignalRService()
         {
             _signalRService = SignalRService.Instance();
         }
-        #endregion
 
     }
 }

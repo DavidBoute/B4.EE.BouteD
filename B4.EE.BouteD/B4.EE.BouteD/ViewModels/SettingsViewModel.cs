@@ -1,5 +1,4 @@
-﻿using B4.EE.BouteD.Models;
-using B4.EE.BouteD.Services;
+﻿using B4.EE.BouteD.Services;
 using B4.EE.BouteD.Services.Abstract;
 using FreshMvvm;
 using Newtonsoft.Json;
@@ -11,6 +10,8 @@ namespace B4.EE.BouteD.ViewModels
 {
     public class SettingsViewModel : FreshBasePageModel
     {
+        private ConnectionSettings _connectionSettings;
+
         private string _prefix;
         public string Prefix
         {
@@ -59,37 +60,26 @@ namespace B4.EE.BouteD.ViewModels
                     await CoreMethods.DisplayAlert("Fout", ex.Message, "Cancel");
                 }
 
-
                 // TODO page sluit automatisch -> tegenhouden
-
             });
 
         public ICommand SaveSettingsCommand => new Command(
             () =>
             {
-                ConnectionSettings connectionSettings = ConnectionSettings.Instance();
-                connectionSettings.Update(Prefix, Host, Port, Path);
+                _connectionSettings.Update(Prefix, Host, Port, Path);
 
                 CoreMethods.PopPageModel();
             });
 
         // Constructor
-        public SettingsViewModel()
+        public SettingsViewModel(ConnectionSettings connectionSettings)
         {
-            try
-            {
-                ConnectionSettings connectionSettings = ConnectionSettings.Instance();
+            _connectionSettings = connectionSettings;
 
-                Prefix = connectionSettings.Prefix;
-                Host = connectionSettings.Host;
-                Port = connectionSettings.Port;
-                Path = connectionSettings.Path;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-
+            Prefix = connectionSettings.Prefix;
+            Host = connectionSettings.Host;
+            Port = connectionSettings.Port;
+            Path = connectionSettings.Path;
         }
     }
 }

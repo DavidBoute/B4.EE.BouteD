@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.UI;
+﻿using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
@@ -11,6 +6,7 @@ using ZXing.Mobile;
 
 namespace B4.EE.BouteD.UWP.Services
 {
+    // Custom Overlay voor gebruik in Barcodescanner
     class ZXingOverlayUIElement : Grid
     {
         public ZXingOverlayUIElement(MobileBarcodeScanner scanner)

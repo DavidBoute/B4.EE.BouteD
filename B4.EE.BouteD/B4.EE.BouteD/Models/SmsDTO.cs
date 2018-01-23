@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace B4.EE.BouteD.Models
 {
@@ -139,33 +134,42 @@ namespace B4.EE.BouteD.Models
             }
         }
 
-        public string ContactFullName { get { return ContactFirstName + " " + ContactLastName; } }
+        public string ContactFullName { get { return $"{ContactFirstName} {ContactLastName} ({ ContactNumber})"; } }
 
         #endregion
 
-        public bool IsEqual(SmsDTO b)
+        /// <summary>
+        /// Vergelijkt of 2 SmsDTO's de zelfde properties hebben
+        /// </summary>
+        /// <param name="that">de andere SmsDTO</param>
+        /// <returns></returns>
+        public bool IsEqual(SmsDTO that)
         {
-            return (this.ContactId == b.ContactId
-                    && this.ContactFirstName == b.ContactFirstName
-                    && this.ContactLastName == b.ContactLastName
-                    && this.ContactNumber == b.ContactNumber
-                    && this.Message == b.Message
-                    && this.StatusId == b.StatusId
-                    && this.StatusName == b.StatusName
-                    && this.TimeStamp == b.TimeStamp
+            return (this.ContactId == that.ContactId
+                    && this.ContactFirstName == that.ContactFirstName
+                    && this.ContactLastName == that.ContactLastName
+                    && this.ContactNumber == that.ContactNumber
+                    && this.Message == that.Message
+                    && this.StatusId == that.StatusId
+                    && this.StatusName == that.StatusName
+                    && this.TimeStamp == that.TimeStamp
                 );
         }
 
-        public void CopyFrom(SmsDTO b)
+        /// <summary>
+        /// Kopieert de properties van een andere SmsDTO naar de huidige
+        /// </summary>
+        /// <param name="that">de andere SmsDTO</param>
+        public void CopyFrom(SmsDTO that)
         {
-            this.ContactId = b.ContactId;
-            this.ContactFirstName = b.ContactFirstName;
-            this.ContactLastName = b.ContactLastName;
-            this.ContactNumber = b.ContactNumber;
-            this.Message = b.Message;
-            this.StatusId = b.StatusId;
-            this.StatusName = b.StatusName;
-            this.TimeStamp = b.TimeStamp;
+            this.ContactId = that.ContactId;
+            this.ContactFirstName = that.ContactFirstName;
+            this.ContactLastName = that.ContactLastName;
+            this.ContactNumber = that.ContactNumber;
+            this.Message = that.Message;
+            this.StatusId = that.StatusId;
+            this.StatusName = that.StatusName;
+            this.TimeStamp = that.TimeStamp;
         }
 
         #region INotifyPropertyChanged Implementation

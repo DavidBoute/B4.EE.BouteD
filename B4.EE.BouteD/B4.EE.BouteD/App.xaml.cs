@@ -15,6 +15,11 @@ namespace B4.EE.BouteD
         {
             InitializeComponent();
 
+            FreshIOC.Container.Register<ISmsDataService, SmsFromSignalRService>();
+            FreshIOC.Container.Register(SignalRService.Instance());
+            FreshIOC.Container.Register(new ConnectionSettings());
+            FreshIOC.Container.Register(new SendSmsService());
+
             var page = FreshPageModelResolver.ResolvePageModel<SmsViewModel>();
             var basicNavContainer = new FreshNavigationContainer(page);
             MainPage = basicNavContainer;

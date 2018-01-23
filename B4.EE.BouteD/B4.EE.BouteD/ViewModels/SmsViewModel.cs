@@ -3,13 +3,9 @@ using B4.EE.BouteD.Models;
 using B4.EE.BouteD.Services;
 using B4.EE.BouteD.Services.Abstract;
 using FreshMvvm;
-using Plugin.Messaging;
-using Plugin.Permissions;
-using Plugin.Permissions.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -22,12 +18,13 @@ namespace B4.EE.BouteD.ViewModels
         private bool _IsFirstLoad = true;
         private ISmsDataService _smsDataService;
         private SignalRService _signalRService;
+        private SendSmsService _sendSmsService;
 
-        private bool _canSend;
-        public bool CanSend
+        private bool _sendToggle;
+        public bool SendToggle
         {
-            get { return _canSend; }
-            set { _canSend = value; RaisePropertyChanged(); }
+            get { return _sendToggle; }
+            set { _sendToggle = value; RaisePropertyChanged(); }
         }
 
         private bool _isRefreshing;
@@ -61,7 +58,7 @@ namespace B4.EE.BouteD.ViewModels
         public ICommand SendSmsListCommand => new Command(
             () =>
             {
-                var smsToSendList = SmsList.Where(x => true);
+                var smsToSendList = SmsList.Where(x => x.StatusName == "Pending");
                 foreach (var smsToSend in smsToSendList)
                 {
                     SendSmsCommand.Execute(smsToSend);
@@ -74,8 +71,9 @@ namespace B4.EE.BouteD.ViewModels
                 SmsDTO sms = smsDto as SmsDTO;
                 if (sms != null)
                 {
-                    SendSmsService smsSendService = new SendSmsService(CanSend);
-                    string smsSendresult = await smsSendService.Send(sms);
+                    string smsSendresult = await _sendSmsService
+                                                    .CanSend(SendToggle)
+                                                    .Send(sms);
 
                     StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == smsSendresult);
                     if (newStatus != null)
@@ -83,7 +81,12 @@ namespace B4.EE.BouteD.ViewModels
                         sms.StatusId = newStatus.Id;
                         sms.StatusName = newStatus.Name;
                         _smsDataService.UpdateSms(sms);
-                    } 
+                    }
+
+                    if (smsSendresult == "Error")
+                    {
+                        await CoreMethods.DisplayAlert("Error", _sendSmsService.ErrorMessage, "OK");
+                    }
                 }
             });
 
@@ -157,6 +160,8 @@ namespace B4.EE.BouteD.ViewModels
 
         protected override async void ViewIsAppearing(object sender, EventArgs e)
         {
+            // Bij eerste keer openen wat vertraging inbouwen bij aanvragen inladen,
+            // anders wordt de Server Response niet opgevangen
             if (_IsFirstLoad)
             {
                 await Task.Delay(1000);
@@ -167,13 +172,14 @@ namespace B4.EE.BouteD.ViewModels
         }
 
         // Constructor
-        public SmsViewModel()
+        public SmsViewModel(ISmsDataService dataService, SignalRService signalRService, SendSmsService sendSmsService)
         {
             SmsList = new ObservableCollection<SmsDTO>();
             ConnectionState = SignalRConnectionState.Closed;
 
-            _smsDataService = SmsFromSignalRService.Instance();
-            _signalRService = SignalRService.Instance();
+            _smsDataService = dataService;
+            _signalRService = signalRService;
+            _sendSmsService = sendSmsService;
 
             // Events vanuit services
             #region Events Services
@@ -229,7 +235,22 @@ namespace B4.EE.BouteD.ViewModels
                         {
                             if (smsDTO.StatusName != "Created")
                             {
-                                SmsList.Add(smsDTO);
+                                // Status aanpassen naar Pending om aan te duiden dat de telefoon aan het verwerken is
+                                if (smsDTO.StatusName == "Queued")
+                                {
+                                    StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == "Pending");
+                                    if (newStatus != null)
+                                    {
+                                        smsDTO.StatusId = newStatus.Id;
+                                        smsDTO.StatusName = newStatus.Name;
+                                    }
+
+                                    _smsDataService.UpdateSms(smsDTO);
+                                }
+                                else
+                                {
+                                    SmsList.Add(smsDTO);
+                                }
                             }
                         }
                     });
@@ -253,29 +274,29 @@ namespace B4.EE.BouteD.ViewModels
             // ConnectionState updates
             #region ConnectionState updates
             MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Open,
-                (signalRService) =>
+                (signalR) =>
                 {
                     ConnectionState = SignalRConnectionState.Open;
                 });
 
             MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Slow,
-                (signalRService) =>
+                (signalR) =>
                 {
                     ConnectionState = SignalRConnectionState.Slow;
                 });
 
             MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Reconnecting,
-                (signalRService) =>
+                (signalR) =>
                 {
                     ConnectionState = SignalRConnectionState.Reconnecting;
                 });
             MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Closed,
-                (signalRService) =>
+                (signalR) =>
                 {
                     ConnectionState = SignalRConnectionState.Closed;
                 });
             MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Error,
-                (signalRService) =>
+                (signalR) =>
                 {
                     ConnectionState = SignalRConnectionState.Error;
                 });

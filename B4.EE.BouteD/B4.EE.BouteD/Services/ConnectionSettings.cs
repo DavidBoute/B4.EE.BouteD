@@ -4,11 +4,15 @@ using Xamarin.Forms;
 
 namespace B4.EE.BouteD.Services
 {
+    /// <summary>
+    /// Leest en schrijft waarden in:
+    /// Android: SharedPreferences
+    /// Apple: NSUserDefaults
+    /// UWP: ApplicationDataContainer
+    /// .NET: UserStore -> IsolcatedStorageFile
+    /// </summary>
     public class ConnectionSettings
     {
-        private static ConnectionSettings _instance 
-            = new ConnectionSettings();
-
         public string Prefix
         {
             get => AppSettings?.GetValueOrDefault(nameof(Prefix), string.Empty);
@@ -37,15 +41,25 @@ namespace B4.EE.BouteD.Services
                 if (CrossSettings.IsSupported)
                     return CrossSettings.Current;
 
-                return null; // or your custom implementation 
+                return null;
             }
         }
 
+        /// <summary>
+        /// Verwittigt andere klassen van update.
+        /// </summary>
         public void NotifyUpdate()
         {
             MessagingCenter.Send(this, "UpdateConnectionSettings");
         }
 
+        /// <summary>
+        /// Past, indien nodig, waarden aan en geeft dan notificatie
+        /// </summary>
+        /// <param name="prefix"></param>
+        /// <param name="host"></param>
+        /// <param name="port"></param>
+        /// <param name="path"></param>
         public void Update(string prefix, string host, string port, string path)
         {
             bool needNotify = false;
@@ -80,24 +94,13 @@ namespace B4.EE.BouteD.Services
             }
         }
 
-        // private constructor
-        private ConnectionSettings()
+        public ConnectionSettings()
         {
             // Set initial settings
             if (!AppSettings.Contains(nameof(Prefix))) Prefix = "http://";
             if (!AppSettings.Contains(nameof(Host))) Host = "192.168.1.4";
             if (!AppSettings.Contains(nameof(Port))) Port = "45455";
             if (!AppSettings.Contains(nameof(Path))) Path = "api/";
-        }
-
-        public static ConnectionSettings Instance()
-        {
-            if (_instance == null)
-            {
-                _instance = new ConnectionSettings();
-            }
-
-            return _instance;
         }
     }
 }
