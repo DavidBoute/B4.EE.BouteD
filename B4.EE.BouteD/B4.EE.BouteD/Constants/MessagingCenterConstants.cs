@@ -16,6 +16,8 @@ namespace B4.EE.BouteD.Constants
         public const string SMS_POST = "SMS_POST";
         public const string SMS_PUT = "SMS_PUT";
         public const string SMS_DELETE = "SMS_DELETE";
+        public const string SMS_SEND = "SMS_SEND";
+        public const string SMS_TOGGLE_SEND = "SMS_TOGGLE_SEND";
 
         public const string MESSAGE = "MESSAGE";
     }

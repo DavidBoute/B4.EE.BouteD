@@ -269,6 +269,25 @@ namespace B4.EE.BouteD.ViewModels
                     });
                 });
 
+            MessagingCenter.Subscribe<SmsDTO>(this, MessagingCenterConstants.SMS_SEND,
+                (smsDTO) =>
+                {
+                    //Device.BeginInvokeOnMainThread(() =>
+                    //{
+                    var foundSms = SmsList.FirstOrDefault(x => x.Id == smsDTO.Id);
+                    if (foundSms != null)
+                    {
+                        SendSmsCommand.Execute(foundSms);
+                    }
+                    //});
+                });
+
+            MessagingCenter.Subscribe<string>(this, MessagingCenterConstants.SMS_TOGGLE_SEND,
+               (toggleMessage) =>
+               {
+                   SendSmsListCommand.Execute(null);
+               });
+
             #endregion
 
             // ConnectionState updates

@@ -168,6 +168,12 @@ namespace B4.EE.BouteD.Services
 
             _hubProxy.On<SmsDTO>("DeleteSms", sms =>
                 MessagingCenter.Send(sms, MessagingCenterConstants.SMS_DELETE));
+
+            _hubProxy.On<SmsDTO>("SendSelectedSms", sms =>
+                MessagingCenter.Send(sms, MessagingCenterConstants.SMS_SEND));
+
+            _hubProxy.On<bool>("ToggleSendPending", toggle =>
+                MessagingCenter.Send($"toggleSend {toggle.ToString()}", MessagingCenterConstants.SMS_TOGGLE_SEND));
         }
 
         async void StartConnection(ConnectionSettings connectionSettings)
