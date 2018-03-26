@@ -27,6 +27,18 @@ namespace B4.EE.BouteD.ViewModels
             set { _sendToggle = value; RaisePropertyChanged(); }
         }
 
+        private bool _sendLoopToggle;
+        public bool SendLoopToggle
+        {
+            get { return _sendLoopToggle; }
+            set
+            {
+                _sendLoopToggle = value;
+                RaisePropertyChanged();
+                if (value) { SendSmsListCommand.Execute(null); }
+            }
+        }
+
         private bool _isRefreshing;
         public bool IsRefreshing
         {
@@ -55,14 +67,28 @@ namespace B4.EE.BouteD.ViewModels
             set { _smsList = value; RaisePropertyChanged(); }
         }
 
-        public ICommand SendSmsListCommand => new Command(
+        public ICommand ToggleSendLoopCommand => new Command(
             () =>
             {
-                var smsToSendList = SmsList.Where(x => x.StatusName == "Pending");
-                foreach (var smsToSend in smsToSendList)
+                SendLoopToggle = !SendLoopToggle;
+            });
+
+        public ICommand SendSmsListCommand => new Command(
+            async () =>
+            {
+                while (_sendLoopToggle)
                 {
-                    SendSmsCommand.Execute(smsToSend);
-                }
+                    var smsToSend = SmsList
+                                        .Where(x => x.StatusName == "Pending")
+                                        .OrderBy(x => x.TimeStamp)
+                                        .FirstOrDefault();
+                    if (smsToSend != null)
+                    {
+                        SendSmsCommand.Execute(smsToSend);
+                    }
+
+                    await Task.Delay(1000);
+                };
             });
 
         public ICommand SendSmsCommand => new Command(
@@ -91,7 +117,7 @@ namespace B4.EE.BouteD.ViewModels
             });
 
         public ICommand GetSmsListCommand => new Command(
-            async () =>
+            () =>
             {
                 IsRefreshing = true;
                 _smsDataService.GetSmsList();
@@ -180,6 +206,8 @@ namespace B4.EE.BouteD.ViewModels
             _smsDataService = dataService;
             _signalRService = signalRService;
             _sendSmsService = sendSmsService;
+
+            SendLoopToggle = false;
 
             // Events vanuit services
             #region Events Services
@@ -272,20 +300,21 @@ namespace B4.EE.BouteD.ViewModels
             MessagingCenter.Subscribe<SmsDTO>(this, MessagingCenterConstants.SMS_SEND,
                 (smsDTO) =>
                 {
-                    //Device.BeginInvokeOnMainThread(() =>
-                    //{
                     var foundSms = SmsList.FirstOrDefault(x => x.Id == smsDTO.Id);
                     if (foundSms != null)
                     {
                         SendSmsCommand.Execute(foundSms);
                     }
-                    //});
                 });
 
             MessagingCenter.Subscribe<string>(this, MessagingCenterConstants.SMS_TOGGLE_SEND,
                (toggleMessage) =>
                {
-                   SendSmsListCommand.Execute(null);
+                   Device.BeginInvokeOnMainThread(() =>
+                   {
+                       bool.TryParse(toggleMessage, out bool sendLoop);
+                       SendLoopToggle = sendLoop;
+                   });
                });
 
             #endregion
