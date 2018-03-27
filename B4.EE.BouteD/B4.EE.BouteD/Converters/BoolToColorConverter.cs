@@ -13,11 +13,11 @@ namespace B4.EE.BouteD.Converters
                 bool IsActive = (bool)value;
                 if (IsActive)
                 {
-                    return "#5cb85c"; // green
+                    return Color.FromHex("#5cb85c"); // green
                 }
                 else
                 {
-                    return "#d9534f"; // red
+                    return Color.FromHex("#d9534f"); // red
                 }
             }
             catch (Exception)

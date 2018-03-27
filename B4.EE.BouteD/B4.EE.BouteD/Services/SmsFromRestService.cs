@@ -160,6 +160,7 @@ namespace B4.EE.BouteD.Services
                     {
                         Id = statusJObject["Id"].Value<int>(),
                         Name = statusJObject["Name"].Value<string>(),
+                        DefaultColorHex = statusJObject["DefaultColorHex"].Value<string>(),
                     };
                     statusList.Add(statusDTO);
                 }

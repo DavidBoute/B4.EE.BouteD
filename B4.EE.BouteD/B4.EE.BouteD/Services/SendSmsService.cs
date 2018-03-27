@@ -3,6 +3,7 @@ using Plugin.Messaging;
 using Plugin.Permissions;
 using Plugin.Permissions.Abstractions;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace B4.EE.BouteD.Services
@@ -68,6 +69,9 @@ namespace B4.EE.BouteD.Services
 
         public async Task<string> Send(SmsDTO sms)
         {
+            // TODO: nog een manier verzinnen zodat sms maar 1x verzonden wordt 
+            // indien verwerkingstijd hoger dan 1 sec is
+
             var smsMessenger = CrossMessaging.Current.SmsMessenger;
             string newStatus = "";
 
@@ -79,14 +83,20 @@ namespace B4.EE.BouteD.Services
                 {
                     try
                     {
-
+                        sms.IsSending = true;
                         if (IsSendEnabled)
                         {
                             smsMessenger.SendSmsInBackground(sms.ContactNumber, sms.Message);
                         }
+                        else
+                        {
+                            await Task.Delay(1500);
+                        }
 
                         newStatus = "Sent";
                         ErrorMessage = "";
+
+                        Debug.WriteLine($"[{DateTime.Now}] Sms sent");
                     }
 
                     catch (Exception ex)
@@ -100,6 +110,11 @@ namespace B4.EE.BouteD.Services
                     newStatus = "Error";
                     ErrorMessage = "Cannot send in background";
                 }
+            }
+            else
+            {
+                newStatus = "Error";
+                ErrorMessage = "Cannot send without permissions";
             }
 
             return newStatus;

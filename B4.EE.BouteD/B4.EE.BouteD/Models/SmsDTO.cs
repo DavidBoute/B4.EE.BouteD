@@ -136,6 +136,20 @@ namespace B4.EE.BouteD.Models
 
         public string ContactFullName { get { return $"{ContactFirstName} {ContactLastName} ({ ContactNumber})"; } }
 
+        private bool _isSending;
+        public bool IsSending
+        {
+            get { return _isSending; }
+            set
+            {
+                if (value != _isSending)
+                {
+                    _isSending = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         #endregion
 
         /// <summary>

@@ -11,17 +11,17 @@ namespace B4.EE.BouteD.Converters
             switch (value.ToString().ToLower())
             {
                 case "created":
-                    return "#FFFFFF"; // white
+                    return Color.FromHex("#FFFFFF"); // white
                 case "queued":
-                    return "#0275d8"; // blue
+                    return Color.FromHex("#0275d8"); // blue
                 case "pending":
-                    return "#f0ad4e"; // orange
+                    return Color.FromHex("#f0ad4e"); // orange
                 case "sent":
-                    return "#5cb85c"; // green
+                    return Color.FromHex("#5cb85c"); // green
                 case "error":
-                    return "#d9534f"; // red
+                    return Color.FromHex("#d9534f"); // red
                 default:
-                    return "#FFFFFF"; //white
+                    return Color.FromHex("#FFFFFF"); //white
             }
         }
 

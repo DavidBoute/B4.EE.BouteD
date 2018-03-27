@@ -81,7 +81,7 @@ namespace B4.EE.BouteD.ViewModels
                     var smsToSend = SmsList
                                         .Where(x => x.StatusName == "Pending")
                                         .OrderBy(x => x.TimeStamp)
-                                        .FirstOrDefault();
+                                        .FirstOrDefault(x => !x.IsSending);
                     if (smsToSend != null)
                     {
                         SendSmsCommand.Execute(smsToSend);
@@ -108,6 +108,7 @@ namespace B4.EE.BouteD.ViewModels
                         sms.StatusName = newStatus.Name;
                         _smsDataService.UpdateSms(sms);
                     }
+                    sms.IsSending = false;
 
                     if (smsSendresult == "Error")
                     {
@@ -171,31 +172,6 @@ namespace B4.EE.BouteD.ViewModels
             {
                 await CoreMethods.DisplayAlert("Connectionstate...", ConnectionState, "OK");
             });
-
-        // ReverseInit
-        public override void ReverseInit(object value)
-        {
-
-        }
-
-        // Init
-        public override void Init(object initData)
-        {
-
-        }
-
-        protected override async void ViewIsAppearing(object sender, EventArgs e)
-        {
-            // Bij eerste keer openen wat vertraging inbouwen bij aanvragen inladen,
-            // anders wordt de Server Response niet opgevangen
-            if (_IsFirstLoad)
-            {
-                await Task.Delay(1000);
-                GetSmsListCommand.Execute(null);
-                GetStatusListCommand.Execute(null);
-                _IsFirstLoad = false;
-            }
-        }
 
         // Constructor
         public SmsViewModel(ISmsDataService dataService, SignalRService signalRService, SendSmsService sendSmsService)
@@ -325,6 +301,8 @@ namespace B4.EE.BouteD.ViewModels
                 (signalR) =>
                 {
                     ConnectionState = SignalRConnectionState.Open;
+                    GetSmsListCommand.Execute(null);
+                    GetStatusListCommand.Execute(null);
                 });
 
             MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Slow,
