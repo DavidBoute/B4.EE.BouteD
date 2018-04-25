@@ -4,7 +4,7 @@ using Xamarin.Forms;
 
 namespace B4.EE.BouteD.Converters
 {
-    class BoolToColorConverter : IValueConverter
+    class SendStatusBoolToStringConverter : IValueConverter
     {
         object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -13,11 +13,11 @@ namespace B4.EE.BouteD.Converters
                 bool IsActive = (bool)value;
                 if (IsActive)
                 {
-                    return Color.FromHex("#5cb85c"); // green
+                    return "Stop sending";
                 }
                 else
                 {
-                    return Color.FromHex("#d9534f"); // red
+                    return "Start sending";
                 }
             }
             catch (Exception)

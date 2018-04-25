@@ -31,6 +31,12 @@ namespace B4.EE.BouteD.Services
             InvokeServerMethod(request);
         }
 
+        public void NotifySendStatus(bool IsSending)
+        {
+            Task request = new Task(() => _hubProxy.Invoke("NotifySendStatus", IsSending));
+            InvokeServerMethod(request);
+        }
+
         public void RequestSmsList()
         {
             Task request = new Task(() => _hubProxy.Invoke("RequestSmsList", false)); // parameter includeCreated
@@ -45,7 +51,7 @@ namespace B4.EE.BouteD.Services
 
         public void RequestUpdateSms(SmsDTO smsDTO)
         {
-            Task request = new Task(() => _hubProxy.Invoke("RequestUpdateSms", smsDTO));
+            Task request = new Task(() => _hubProxy.Invoke("RequestEditSms", smsDTO));
             InvokeServerMethod(request);
         }
 
@@ -139,22 +145,13 @@ namespace B4.EE.BouteD.Services
             _hubConnection.Error += OnError;
 
             // Server Sent Events
-            _hubProxy.On<SmsDTOWithOperation>("notifyChangeToPage", smsDTOWithOperation =>
+
+            _hubProxy.On("notifyChangeToSmsList", () =>
                 {
-                    switch (smsDTOWithOperation.Operation)
-                    {
-                        case "PUT":
-                            MessagingCenter.Send(smsDTOWithOperation.SmsDTO, MessagingCenterConstants.SMS_PUT);
-                            break;
-                        case "DELETE":
-                            MessagingCenter.Send(smsDTOWithOperation.SmsDTO, MessagingCenterConstants.SMS_DELETE);
-                            break;
-                        default:
-                            break;
-                    }
+                    RequestSmsList();
                 });
 
-            _hubProxy.On<string>("displayMessage", message =>
+            _hubProxy.On<string>("DisplayMessage", message =>
                 MessagingCenter.Send(message, MessagingCenterConstants.MESSAGE));
 
             _hubProxy.On<List<SmsDTO>>("GetSmsList", smsList =>
@@ -163,17 +160,23 @@ namespace B4.EE.BouteD.Services
             _hubProxy.On<List<StatusDTO>>("GetStatusList", statusList =>
                 MessagingCenter.Send(statusList, MessagingCenterConstants.STATUS_LIST_GET));
 
-            _hubProxy.On<SmsDTO>("UpdateSms", sms =>
-                MessagingCenter.Send(sms, MessagingCenterConstants.SMS_PUT));
+            _hubProxy.On<SmsDTO>("NotifyCreateSms", smsDTO =>
+                MessagingCenter.Send(smsDTO, MessagingCenterConstants.SMS_POST));
 
-            _hubProxy.On<SmsDTO>("DeleteSms", sms =>
-                MessagingCenter.Send(sms, MessagingCenterConstants.SMS_DELETE));
+            _hubProxy.On<SmsDTO>("NotifyEditSms", smsDTO =>
+                MessagingCenter.Send(smsDTO, MessagingCenterConstants.SMS_PUT));
 
-            _hubProxy.On<SmsDTO>("SendSelectedSms", sms =>
-                MessagingCenter.Send(sms, MessagingCenterConstants.SMS_SEND));
+            _hubProxy.On<SmsDTO>("NotifyDeleteSms", smsDTO =>
+                MessagingCenter.Send(smsDTO, MessagingCenterConstants.SMS_DELETE));
+
+            _hubProxy.On<SmsDTO>("SendSelectedSms", smsDTO =>
+                MessagingCenter.Send(smsDTO, MessagingCenterConstants.SMS_SEND));
 
             _hubProxy.On<bool>("ToggleSendPending", toggle =>
                 MessagingCenter.Send(toggle.ToString(), MessagingCenterConstants.SMS_TOGGLE_SEND));
+
+            _hubProxy.On("GetSendStatus", () =>
+                MessagingCenter.Send("SendStatus",MessagingCenterConstants.SMS_TOGGLE_SEND));
         }
 
         async void StartConnection(ConnectionSettings connectionSettings)

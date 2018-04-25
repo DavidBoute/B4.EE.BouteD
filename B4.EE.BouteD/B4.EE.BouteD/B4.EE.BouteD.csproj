@@ -41,7 +41,8 @@
     <Compile Include="Constants\MessagingCenterConstants.cs" />
     <Compile Include="Constants\SignalRConnectionState.cs" />
     <Compile Include="Converters\ConnectionStateToImageSourceConverter.cs" />
-    <Compile Include="Converters\BoolToColorConverter.cs" />
+    <Compile Include="Converters\SendStatusBoolToStringConverter.cs" />
+    <Compile Include="Converters\SendStatusBoolToColorConverter.cs" />
     <Compile Include="Converters\StatusToColorConverter.cs" />
     <Compile Include="Models\SmsDTOWithOperation.cs" />
     <Compile Include="Services\Abstract\ISmsDataService.cs" />

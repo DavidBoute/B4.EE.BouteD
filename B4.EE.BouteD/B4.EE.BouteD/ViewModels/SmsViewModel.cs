@@ -15,7 +15,6 @@ namespace B4.EE.BouteD.ViewModels
 {
     public class SmsViewModel : FreshBasePageModel
     {
-        private bool _IsFirstLoad = true;
         private ISmsDataService _smsDataService;
         private SignalRService _signalRService;
         private SendSmsService _sendSmsService;
@@ -36,6 +35,7 @@ namespace B4.EE.BouteD.ViewModels
                 _sendLoopToggle = value;
                 RaisePropertyChanged();
                 if (value) { SendSmsListCommand.Execute(null); }
+                _signalRService.NotifySendStatus(value);
             }
         }
 
@@ -290,6 +290,15 @@ namespace B4.EE.BouteD.ViewModels
                    {
                        bool.TryParse(toggleMessage, out bool sendLoop);
                        SendLoopToggle = sendLoop;
+                   });
+               });
+
+            MessagingCenter.Subscribe<string>(this, MessagingCenterConstants.SMS_SENDSTATUS,
+               (str) =>
+               {
+                   Device.BeginInvokeOnMainThread(() =>
+                   {
+                       signalRService.NotifySendStatus(SendLoopToggle);
                    });
                });
 

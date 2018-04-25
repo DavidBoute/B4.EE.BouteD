@@ -8,7 +8,8 @@
         <ResourceDictionary>
             <conv:StatusToColorConverter x:Key="StatusToColorConverter" />
             <conv:ConnectionStateToImageSourceConverter x:Key="ConnectionStateToImageSourceConverter" />
-            <conv:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <conv:SendStatusBoolToColorConverter x:Key="SendStatusBoolToColorConverter"/>
+            <conv:SendStatusBoolToStringConverter x:Key="SendStatusBoolToStringConverter"/>
         </ResourceDictionary>
     </ContentPage.Resources>
     <ContentPage.ToolbarItems>
@@ -102,8 +103,8 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-            <Button Text="Send Pending"
-                    BackgroundColor="{Binding SendLoopToggle, Converter={StaticResource BoolToColorConverter}}"
+            <Button Text="{Binding SendLoopToggle, Converter={StaticResource SendStatusBoolToStringConverter}}"
+                    BackgroundColor="{Binding SendLoopToggle, Converter={StaticResource SendStatusBoolToColorConverter}}"
                     Command="{Binding ToggleSendLoopCommand}"/>
         </StackLayout>
     </ContentPage.Content>
