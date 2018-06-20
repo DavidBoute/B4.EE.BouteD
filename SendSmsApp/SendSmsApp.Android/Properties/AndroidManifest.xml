@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.IVO.SmsSenderApp" android:versionCode="1" android:versionName="1.0" android:installLocation="auto">
+	<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="25" />
+	<uses-permission android:name="android.permission.SEND_SMS" />
+	<uses-permission android:name="android.permission.CAMERA" />
+	<uses-permission android:name="android.permission.FLASHLIGHT" />
+	<application android:label="SmsSender" android:icon="@drawable/cellphone_logo"></application>
+</manifest>

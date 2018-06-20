@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:conv="clr-namespace:SmsSenderApp.Converters"
+             x:Class="SmsSenderApp.Pages.SmsPage"
+             x:Name="Page">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:StatusToColorConverter x:Key="StatusToColorConverter" />
+            <conv:ConnectionStateToImageSourceConverter x:Key="ConnectionStateToImageSourceConverter" />
+            <conv:SendStatusBoolToColorConverter x:Key="SendStatusBoolToColorConverter"/>
+            <conv:SendStatusBoolToStringConverter x:Key="SendStatusBoolToStringConverter"/>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <ContentPage.ToolbarItems>
+        <!--Merk op dat de verwijzing naar de images ook verwijst naar een folder Images,
+            Android toont images zonder aanpassing van path
+            TODO: verder uitzoeken of dat een feature is-->
+        <ToolbarItem Order="Primary" Icon="Images/refresh.png" Text="Refresh" Priority="0" 
+                         Command="{Binding GetSmsListCommand}"/>
+        <ToolbarItem Order="Primary" Icon="Images/settings.png" Text="Settings" Priority="1" 
+                         Command="{Binding OpenSettingsCommand}"/>
+    </ContentPage.ToolbarItems>
+    <ContentPage.Content>
+        <StackLayout>
+            <StackLayout Orientation="Horizontal"
+                         BackgroundColor="AliceBlue">
+                <AbsoluteLayout HorizontalOptions="StartAndExpand" VerticalOptions="CenterAndExpand"
+                                        HeightRequest="48" WidthRequest="50"
+                                        Padding="3">
+                    <Image Source= "Images/cellphone_icon.png"
+                                   AbsoluteLayout.LayoutFlags="All" AbsoluteLayout.LayoutBounds="0,1,1,1">
+                        <Image.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowConnectionStateCommand}"/>
+                        </Image.GestureRecognizers>
+                    </Image>
+                </AbsoluteLayout>
+
+                <Label Text="Send?"
+                               HorizontalOptions="End" VerticalOptions="CenterAndExpand"/>
+                <Switch IsToggled="{Binding SendToggle}"
+                                HorizontalOptions="End" VerticalOptions="CenterAndExpand"/>
+
+                <AbsoluteLayout HorizontalOptions="End" VerticalOptions="CenterAndExpand"
+                                        HeightRequest="30" WidthRequest="30"
+                                        Padding="3">
+                    <Image Source="{Binding ConnectionState, Converter={StaticResource ConnectionStateToImageSourceConverter}}"
+                                   AbsoluteLayout.LayoutFlags="PositionProportional" AbsoluteLayout.LayoutBounds="0.5,0.5">
+                        <Image.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowConnectionStateCommand}"/>
+                        </Image.GestureRecognizers>
+                    </Image>
+                </AbsoluteLayout>
+            </StackLayout>
+
+            <ListView ItemsSource="{Binding SmsList}"
+                      HasUnevenRows="True"
+                      IsPullToRefreshEnabled="True"
+                      RefreshCommand="{Binding GetSmsListCommand}"
+                      IsRefreshing="{Binding IsRefreshing, Mode=OneWay}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <ViewCell.ContextActions>
+                                <MenuItem Text="Change status"
+                                          Command="{Binding BindingContext.ChangeSmsStatusCommand, Source={x:Reference Page}}"
+                                          CommandParameter="{Binding .}"/>
+                                <MenuItem Text="Send"
+                                          Command="{Binding BindingContext.SendSmsCommand, Source={x:Reference Page}}"
+                                          CommandParameter="{Binding .}"/>
+                                <MenuItem Text="Delete" IsDestructive="True"
+                                          Command="{Binding BindingContext.DeleteSmsCommand, Source={x:Reference Page}}"
+                                          CommandParameter="{Binding .}"/>
+                            </ViewCell.ContextActions>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Frame OutlineColor="Black" CornerRadius="10" HasShadow="True"
+                                       Margin="5,0,5,5" Padding="5"
+                                       BackgroundColor="{Binding StatusName, Converter={StaticResource StatusToColorConverter}}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Label Text="{Binding ContactFullName}"
+                                               Grid.Row="0" Grid.Column="0"/>
+                                        <Label Text="{Binding Message}"
+                                               FontAttributes="Italic"
+                                               Grid.Row="1" Grid.Column="0"/>
+                                    </Grid>
+                                </Frame>
+                            </Grid>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <Button Text="{Binding SendLoopToggle, Converter={StaticResource SendStatusBoolToStringConverter}}"
+                    BackgroundColor="{Binding SendLoopToggle, Converter={StaticResource SendStatusBoolToColorConverter}}"
+                    Command="{Binding ToggleSendLoopCommand}"/>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>
