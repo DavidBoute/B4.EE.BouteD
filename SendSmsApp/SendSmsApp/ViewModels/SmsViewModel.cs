@@ -195,6 +195,22 @@ namespace SmsSenderApp.ViewModels
                     {
                         SmsList = new ObservableCollection<SmsDTO>(smsDTOList);
                         IsRefreshing = false;
+
+                        foreach (var smsDTO in SmsList)
+                        {
+                            // Status aanpassen naar Pending om aan te duiden dat de telefoon aan het verwerken is
+                            if (smsDTO.StatusName == "Queued")
+                            {
+                                StatusDTO newStatus = StatusList.SingleOrDefault(x => x.Name == "Pending");
+                                if (newStatus != null)
+                                {
+                                    smsDTO.StatusId = newStatus.Id;
+                                    smsDTO.StatusName = newStatus.Name;
+                                }
+
+                                _smsDataService.UpdateSms(smsDTO);
+                            }
+                        }
                     });
                 });
 
@@ -307,11 +323,13 @@ namespace SmsSenderApp.ViewModels
             // ConnectionState updates
             #region ConnectionState updates
             MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Open,
-                (signalR) =>
+                async(signalR) =>
                 {
                     ConnectionState = SignalRConnectionState.Open;
-                    GetSmsListCommand.Execute(null);
                     GetStatusListCommand.Execute(null);
+                    await Task.Delay(500);
+                    GetSmsListCommand.Execute(null);
+
                 });
 
             MessagingCenter.Subscribe<SignalRService>(this, SignalRConnectionState.Slow,
